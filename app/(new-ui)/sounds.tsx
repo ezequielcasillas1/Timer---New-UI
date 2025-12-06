@@ -6,23 +6,22 @@ import {
   ScrollView, 
   TouchableOpacity,
   Platform,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppContext } from '@/src/context/AppContext';
 import { soundService, SOUND_LIBRARY } from '@/src/services/SoundService';
+import { testSoundService } from '@/src/services/TestSoundService';
+import SoundPresetCard from '@/components/SoundPresetCard';
+import SavePresetModal from '@/components/SavePresetModal';
+import { SoundPreset } from '@/src/context/AppContext';
 
-const newUIColors = {
-  background: '#E8F4F8',
-  card: '#FFFFFF',
-  primary: '#7EC8E3',
-  secondary: '#B8E0D2',
-  text: '#2C3E50',
-  textSecondary: '#7F8C8D',
-  accent: '#A8D8EA',
-};
+import { theme } from '@/constants/Theme';
+
+const newUIColors = theme;
 
 const { width } = Dimensions.get('window');
 
@@ -67,6 +66,7 @@ export default function SoundsScreen() {
   const { state, dispatch } = useAppContext();
   const [selectedTab, setSelectedTab] = useState<'all' | 'favorites'>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false);
 
   // Get selected sound for each category to show as "Active Sound Layers"
   const activeSoundLayers = [
@@ -137,6 +137,92 @@ export default function SoundsScreen() {
     }
   };
 
+  const handleMasterSoundToggle = async () => {
+    const newMasterState = !state.sounds.master;
+    dispatch({
+      type: 'UPDATE_SOUNDS',
+      payload: { master: newMasterState },
+    });
+    if (newMasterState) {
+      await soundService.initialize();
+    } else {
+      await soundService.forceStopAll();
+    }
+    soundService.playHaptic('medium');
+  };
+
+  const handleHapticsToggle = () => {
+    const newHapticsState = !state.sounds.haptics;
+    dispatch({
+      type: 'UPDATE_SOUNDS',
+      payload: { haptics: newHapticsState },
+    });
+    soundService.setHapticsEnabled(newHapticsState);
+    if (newHapticsState) {
+      soundService.playHaptic('medium');
+    }
+  };
+
+  const handleTestHaptics = async () => {
+    await testSoundService.testHaptics();
+  };
+
+  const handleSavePreset = (name: string) => {
+    const newPreset: SoundPreset = {
+      id: Date.now().toString(),
+      name,
+      ticking: { ...state.sounds.ticking },
+      breathing: { ...state.sounds.breathing },
+      nature: { ...state.sounds.nature },
+      isFavorite: false,
+      createdAt: new Date(),
+    };
+    dispatch({ type: 'ADD_SOUND_PRESET', payload: newPreset });
+    soundService.playHaptic('light');
+  };
+
+  const handleTogglePresetFavorite = (presetId: string) => {
+    dispatch({ type: 'TOGGLE_PRESET_FAVORITE', payload: presetId });
+    soundService.playHaptic('light');
+  };
+
+  const handleToggleFavoriteSound = (soundId: string) => {
+    dispatch({ type: 'TOGGLE_FAVORITE_SOUND', payload: soundId });
+    soundService.playHaptic('light');
+  };
+
+  const isFavoriteSound = (soundId: string) => state.favoriteSoundIds.includes(soundId);
+
+  const handleApplyPreset = (preset: SoundPreset) => {
+    dispatch({
+      type: 'UPDATE_SOUNDS',
+      payload: {
+        ticking: preset.ticking,
+        breathing: preset.breathing,
+        nature: preset.nature,
+      },
+    });
+    soundService.playHaptic('medium');
+  };
+
+  const handleDuplicatePreset = (preset: SoundPreset) => {
+    const duplicatedPreset: SoundPreset = {
+      ...preset,
+      id: Date.now().toString(),
+      name: `${preset.name} (Copy)`,
+      isFavorite: false,
+      createdAt: new Date(),
+    };
+    dispatch({ type: 'ADD_SOUND_PRESET', payload: duplicatedPreset });
+    soundService.playHaptic('light');
+    Alert.alert('Success', 'Preset duplicated successfully');
+  };
+
+  // Filter presets based on selected tab
+  const displayedPresets = selectedTab === 'favorites'
+    ? state.soundPresets.filter(p => p.isFavorite)
+    : state.soundPresets;
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -170,7 +256,13 @@ export default function SoundsScreen() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'favorites' && styles.tabActive]}
-            onPress={() => setSelectedTab('favorites')}
+            onPress={() => {
+              if (selectedTab === 'favorites') {
+                router.push('/(new-ui)/favorites');
+              } else {
+                setSelectedTab('favorites');
+              }
+            }}
           >
             <Text style={[styles.tabText, selectedTab === 'favorites' && styles.tabTextActive]}>
               Favorites
@@ -182,6 +274,69 @@ export default function SoundsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Helping Text */}
+          <View style={styles.helpingTextContainer}>
+            <Text style={styles.helpingText}>Pick your sound types.</Text>
+          </View>
+
+          {/* Master Sound Toggle */}
+          <View style={styles.masterSoundContainer}>
+            <View style={styles.masterSoundContent}>
+              <IconSymbol 
+                name={state.sounds.master ? "speaker.wave.3.fill" : "speaker.slash.fill"} 
+                size={24} 
+                color={newUIColors.text} 
+              />
+              <Text style={styles.masterSoundText}>Master Sound</Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.toggle,
+                state.sounds.master ? styles.toggleActive : styles.toggleInactive,
+              ]}
+              onPress={handleMasterSoundToggle}
+            >
+              <View
+                style={[
+                  styles.toggleCircle,
+                  state.sounds.master ? styles.toggleCircleActive : styles.toggleCircleInactive,
+                ]}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Haptics Toggle */}
+          <View style={styles.masterSoundContainer}>
+            <View style={styles.masterSoundContent}>
+              <IconSymbol 
+                name="hand.tap.fill" 
+                size={22} 
+                color={newUIColors.text} 
+              />
+              <Text style={styles.masterSoundText}>Haptic Feedback</Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.toggle,
+                state.sounds.haptics ? styles.toggleActive : styles.toggleInactive,
+              ]}
+              onPress={handleHapticsToggle}
+            >
+              <View
+                style={[
+                  styles.toggleCircle,
+                  state.sounds.haptics ? styles.toggleCircleActive : styles.toggleCircleInactive,
+                ]}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Test haptics CTA */}
+          <TouchableOpacity style={styles.testButton} onPress={handleTestHaptics}>
+            <IconSymbol name="waveform.path.ecg" size={18} color={newUIColors.text} />
+            <Text style={styles.testButtonText}>Test Haptics</Text>
+          </TouchableOpacity>
+
           {/* Active Sounds Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Active Sound Layers</Text>
@@ -240,19 +395,31 @@ export default function SoundsScreen() {
                   <Text style={styles.soundTitle}>{sound.title}</Text>
                   <Text style={styles.soundDescription}>{sound.description}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={[
-                    styles.playButton,
-                    playingId === sound.id && styles.playButtonActive
-                  ]}
-                  onPress={() => handlePlayPreview(sound.id)}
-                >
-                  <IconSymbol 
-                    name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                    size={20} 
-                    color="#FFFFFF" 
-                  />
-                </TouchableOpacity>
+                <View style={styles.soundActions}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.playButton,
+                      playingId === sound.id && styles.playButtonActive
+                    ]}
+                    onPress={() => handlePlayPreview(sound.id)}
+                  >
+                    <IconSymbol 
+                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => handleToggleFavoriteSound(sound.id)}
+                  >
+                    <IconSymbol
+                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
+                      size={20}
+                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -279,19 +446,31 @@ export default function SoundsScreen() {
                   <Text style={styles.soundTitle}>{sound.title}</Text>
                   <Text style={styles.soundDescription}>{sound.description}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={[
-                    styles.playButton,
-                    playingId === sound.id && styles.playButtonActive
-                  ]}
-                  onPress={() => handlePlayPreview(sound.id)}
-                >
-                  <IconSymbol 
-                    name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                    size={20} 
-                    color="#FFFFFF" 
-                  />
-                </TouchableOpacity>
+                <View style={styles.soundActions}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.playButton,
+                      playingId === sound.id && styles.playButtonActive
+                    ]}
+                    onPress={() => handlePlayPreview(sound.id)}
+                  >
+                    <IconSymbol 
+                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => handleToggleFavoriteSound(sound.id)}
+                  >
+                    <IconSymbol
+                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
+                      size={20}
+                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -318,19 +497,31 @@ export default function SoundsScreen() {
                   <Text style={styles.soundTitle}>{sound.title}</Text>
                   <Text style={styles.soundDescription}>{sound.description}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={[
-                    styles.playButton,
-                    playingId === sound.id && styles.playButtonActive
-                  ]}
-                  onPress={() => handlePlayPreview(sound.id)}
-                >
-                  <IconSymbol 
-                    name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                    size={20} 
-                    color="#FFFFFF" 
-                  />
-                </TouchableOpacity>
+                <View style={styles.soundActions}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.playButton,
+                      playingId === sound.id && styles.playButtonActive
+                    ]}
+                    onPress={() => handlePlayPreview(sound.id)}
+                  >
+                    <IconSymbol 
+                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => handleToggleFavoriteSound(sound.id)}
+                  >
+                    <IconSymbol
+                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
+                      size={20}
+                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -342,27 +533,49 @@ export default function SoundsScreen() {
                 <Text style={styles.sectionTitle}>Sound Presets</Text>
                 <Text style={styles.sectionDescription}>Saved sound combinations</Text>
               </View>
-              <TouchableOpacity style={styles.addButton}>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => setShowSavePresetModal(true)}
+              >
                 <IconSymbol name="plus" size={20} color={newUIColors.primary} />
                 <Text style={styles.addButtonText}>Save Preset</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.presetsGrid}>
-              {['Morning Focus', 'Deep Work', 'Evening Wind Down'].map((preset, index) => (
-                <TouchableOpacity key={index} style={styles.presetCard}>
-                  <View style={styles.presetIcon}>
-                    <IconSymbol 
-                      name={index === 0 ? 'sunrise' : index === 1 ? 'brain' : 'moon.stars'} 
-                      size={24} 
-                      color={newUIColors.primary} 
+            {displayedPresets.length === 0 ? (
+              <View style={styles.emptyPresets}>
+                <IconSymbol name="music.note.list" size={48} color={newUIColors.textSecondary} />
+                <Text style={styles.emptyPresetsText}>
+                  {selectedTab === 'favorites' 
+                    ? 'No favorite presets yet' 
+                    : 'No presets saved yet'}
+                </Text>
+                <Text style={styles.emptyPresetsHint}>
+                  {selectedTab === 'favorites'
+                    ? 'Tap the heart icon on a preset to add it to favorites'
+                    : 'Configure your sounds and tap "Save Preset" to create one'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.presetsList}>
+                {displayedPresets.map((preset) => (
+                  <View key={preset.id} style={styles.presetCardWrapper}>
+                    <SoundPresetCard
+                      preset={preset}
+                      onPress={() => handleApplyPreset(preset)}
+                      onFavoriteToggle={() => handleTogglePresetFavorite(preset.id)}
                     />
+                    <TouchableOpacity
+                      style={styles.duplicateButton}
+                      onPress={() => handleDuplicatePreset(preset)}
+                    >
+                      <IconSymbol name="doc.on.doc" size={16} color={newUIColors.textSecondary} />
+                      <Text style={styles.duplicateButtonText}>Duplicate</Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.presetTitle}>{preset}</Text>
-                  <Text style={styles.presetCount}>{Math.floor(Math.random() * 3) + 2} sounds</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -379,6 +592,13 @@ export default function SoundsScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {/* Save Preset Modal */}
+      <SavePresetModal
+        visible={showSavePresetModal}
+        onClose={() => setShowSavePresetModal(false)}
+        onSave={handleSavePreset}
+      />
     </View>
   );
 }
@@ -432,6 +652,93 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  helpingTextContainer: {
+    marginBottom: 20,
+    paddingVertical: 12,
+  },
+  helpingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: newUIColors.text,
+    textAlign: 'center',
+  },
+  masterSoundContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  masterSoundContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  masterSoundText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: newUIColors.text,
+  },
+  toggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    padding: 2,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: newUIColors.textSecondary + '40',
+  },
+  toggleActive: {
+    backgroundColor: newUIColors.primary,
+    borderColor: newUIColors.primary,
+  },
+  toggleInactive: {
+    backgroundColor: newUIColors.background,
+  },
+  toggleCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+  },
+  toggleCircleActive: {
+    alignSelf: 'flex-end',
+  },
+  toggleCircleInactive: {
+    alignSelf: 'flex-start',
+  },
+  testButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    marginLeft: 20,
+    marginBottom: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: newUIColors.card,
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '20',
+  },
+  testButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: newUIColors.text,
   },
   section: {
     marginBottom: 32,
@@ -518,6 +825,21 @@ const styles = StyleSheet.create({
   playButtonActive: {
     backgroundColor: newUIColors.primary,
   },
+  soundActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heartButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: newUIColors.card,
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '30',
+  },
   checkbox: {
     width: 28,
     height: 28,
@@ -556,48 +878,48 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: newUIColors.primary,
   },
-  presetsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  presetsList: {
     gap: 12,
   },
-  presetCard: {
-    width: (width - 52) / 2,
-    backgroundColor: newUIColors.card,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+  presetCardWrapper: {
+    position: 'relative',
   },
-  presetIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: newUIColors.primary + '20',
-    justifyContent: 'center',
+  duplicateButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: newUIColors.background + 'E0',
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '30',
   },
-  presetTitle: {
-    fontSize: 15,
+  duplicateButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: newUIColors.textSecondary,
+  },
+  emptyPresets: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 20,
+  },
+  emptyPresetsText: {
+    fontSize: 16,
     fontWeight: '600',
     color: newUIColors.text,
-    textAlign: 'center',
-    marginBottom: 4,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  presetCount: {
-    fontSize: 12,
+  emptyPresetsHint: {
+    fontSize: 14,
     color: newUIColors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   bottomNav: {
     position: 'absolute',

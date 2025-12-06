@@ -14,15 +14,11 @@ import { IconSymbol } from '@/components/IconSymbol';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAppContext } from '@/src/context/AppContext';
 
+import { theme } from '@/constants/Theme';
+
 const newUIColors = {
-  background: '#E8F4F8',
-  card: '#FFFFFF',
-  primary: '#7EC8E3',
-  secondary: '#B8E0D2',
-  text: '#2C3E50',
-  textSecondary: '#7F8C8D',
-  accent: '#A8D8EA',
-  progressLight: '#D4ECF5',
+  ...theme,
+  progressLight: '#D4ECF5', // Additional color for analytics
 };
 
 const { width } = Dimensions.get('window');
@@ -80,7 +76,7 @@ export default function AnalyticsScreen() {
 
   const recentMoments = [
     { date: 'Today', activity: 'Calm Focus', duration: '20 min', emoji: '🌊' },
-    { date: 'Yesterday', activity: 'Mindful Minutes', duration: '15 min', emoji: '🧘' },
+    { date: 'Yesterday', activity: 'Focus Session', duration: '15 min', emoji: '⏰' },
     { date: '2 days ago', activity: 'Breathe & Begin', duration: '25 min', emoji: '🍃' },
   ];
 
