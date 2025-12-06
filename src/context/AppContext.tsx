@@ -17,7 +17,7 @@ export interface Session {
   mode: 'speed' | 'locked';
   speedSetting: number;
   timeSlotMultiplier: 1 | 2 | 3;
-  timeSlotDuration: 15 | 30 | 50;
+  timeSlotDuration: 15 | 30 | 50 | 60;
   slotEveryMinutes: number;
   targetDuration: number;
   clockStyle: ClockStyle;
@@ -45,14 +45,17 @@ export interface Sounds {
   ticking: {
     enabled: boolean;
     selectedSound: string;
+    volume: number; // 0.0 to 1.0
   };
   breathing: {
     enabled: boolean;
     selectedSound: string;
+    volume: number; // 0.0 to 1.0
   };
   nature: {
     enabled: boolean;
     selectedSound: string;
+    volume: number; // 0.0 to 1.0
   };
 }
 
@@ -62,6 +65,8 @@ export interface Progress {
   currentStreak: number;
   weeklyProgress: number[];
   averageRating: number;
+  bestStreak: number;
+  lastSessionDate?: string; // ISO date string (yyyy-mm-dd) for streak calculations
 }
 
 export interface SessionHistoryItem {
@@ -98,6 +103,16 @@ export interface AppSettings {
   scheduledSessions: ScheduledSession[];
 }
 
+export interface SoundPreset {
+  id: string;
+  name: string;
+  ticking: { enabled: boolean; selectedSound: string; volume: number };
+  breathing: { enabled: boolean; selectedSound: string; volume: number };
+  nature: { enabled: boolean; selectedSound: string; volume: number };
+  isFavorite: boolean;
+  createdAt: Date;
+}
+
 export interface AppState {
   user: User;
   session: Session;
@@ -107,6 +122,8 @@ export interface AppState {
   history: SessionHistoryItem[];
   feedback: Feedback;
   settings: AppSettings;
+  soundPresets: SoundPreset[]; // Sound presets storage
+  favoriteSoundIds: string[]; // Hearted individual sounds for quick add
   analytics: SessionAnalytics | null; // Real-time analytics from Supabase
   isInitialized: boolean;
   isSyncing: boolean;
@@ -146,14 +163,17 @@ const initialState: AppState = {
     ticking: {
       enabled: false,
       selectedSound: 'ticking-classic-clock',
+      volume: 0.8,
     },
     breathing: {
       enabled: false,
       selectedSound: 'breathing-deep-calm',
+      volume: 0.7,
     },
     nature: {
       enabled: false,
       selectedSound: 'nature-gentle-rain',
+      volume: 0.6,
     },
   },
   progress: {
@@ -162,6 +182,7 @@ const initialState: AppState = {
     currentStreak: 0,
     weeklyProgress: [0, 0, 0, 0, 0, 0, 0],
     averageRating: 0,
+    bestStreak: 0,
   },
   history: [],
   feedback: {
@@ -180,6 +201,8 @@ const initialState: AppState = {
     notifications: true,
     scheduledSessions: [],
   },
+  soundPresets: [], // Sound presets array
+  favoriteSoundIds: [],
   analytics: null,
   isInitialized: false,
   isSyncing: false,
@@ -204,7 +227,12 @@ type AppAction =
   | { type: 'SET_ANALYTICS'; payload: SessionAnalytics | null }
   | { type: 'SET_INITIALIZED'; payload: boolean }
   | { type: 'SET_SYNCING'; payload: boolean }
-  | { type: 'UPDATE_PROGRESS'; payload: Partial<Progress> };
+  | { type: 'UPDATE_PROGRESS'; payload: Partial<Progress> }
+  | { type: 'ADD_SOUND_PRESET'; payload: SoundPreset }
+  | { type: 'UPDATE_SOUND_PRESET'; payload: { id: string; updates: Partial<SoundPreset> } }
+  | { type: 'DELETE_SOUND_PRESET'; payload: string }
+  | { type: 'TOGGLE_PRESET_FAVORITE'; payload: string }
+  | { type: 'TOGGLE_FAVORITE_SOUND'; payload: string };
 
 // Reducer
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -229,6 +257,33 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case 'END_SESSION': {
+      // Date-only key (local) for streaks and day uniqueness
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const dateKey = todayDate.toISOString().split('T')[0];
+      const lastDateKey = state.progress.lastSessionDate;
+
+      // Streak calculation: only increment once per new day; reset if gap > 1 day
+      let nextStreak = state.progress.currentStreak;
+      if (!lastDateKey) {
+        nextStreak = 1;
+      } else {
+        const lastDate = new Date(lastDateKey);
+        const diffDays = Math.round(
+          (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (diffDays === 0) {
+          // Same day: keep streak as-is
+          nextStreak = state.progress.currentStreak || 1;
+        } else if (diffDays === 1) {
+          nextStreak = state.progress.currentStreak + 1;
+        } else {
+          nextStreak = 1;
+        }
+      }
+
+      const bestStreak = Math.max(state.progress.bestStreak || 0, nextStreak);
+
       const newSession: SessionHistoryItem = {
         id: Date.now().toString(),
         date: new Date(),
@@ -255,7 +310,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
           ...state.progress,
           totalSessions: state.progress.totalSessions + 1,
           totalTime: state.progress.totalTime + action.payload.duration / 60,
-          currentStreak: state.progress.currentStreak + 1,
+          currentStreak: nextStreak,
+          bestStreak,
+          lastSessionDate: dateKey,
           weeklyProgress: newWeeklyProgress,
         },
       };
@@ -360,6 +417,48 @@ function appReducer(state: AppState, action: AppAction): AppState {
         progress: { ...state.progress, ...action.payload },
       };
 
+    case 'ADD_SOUND_PRESET':
+      return {
+        ...state,
+        soundPresets: [...state.soundPresets, action.payload],
+      };
+
+    case 'UPDATE_SOUND_PRESET':
+      return {
+        ...state,
+        soundPresets: state.soundPresets.map((preset) =>
+          preset.id === action.payload.id
+            ? { ...preset, ...action.payload.updates }
+            : preset
+        ),
+      };
+
+    case 'DELETE_SOUND_PRESET':
+      return {
+        ...state,
+        soundPresets: state.soundPresets.filter((preset) => preset.id !== action.payload),
+      };
+
+    case 'TOGGLE_PRESET_FAVORITE':
+      return {
+        ...state,
+        soundPresets: state.soundPresets.map((preset) =>
+          preset.id === action.payload
+            ? { ...preset, isFavorite: !preset.isFavorite }
+            : preset
+        ),
+      };
+
+    case 'TOGGLE_FAVORITE_SOUND': {
+      const exists = state.favoriteSoundIds.includes(action.payload);
+      return {
+        ...state,
+        favoriteSoundIds: exists
+          ? state.favoriteSoundIds.filter((id) => id !== action.payload)
+          : [...state.favoriteSoundIds, action.payload],
+      };
+    }
+
     default:
       return state;
   }
@@ -435,6 +534,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           totalSessions: analytics.totalSessions,
           totalTime: analytics.totalTime,
           currentStreak: analytics.currentStreak,
+          bestStreak: analytics.bestStreak,
           weeklyProgress: analytics.weeklyProgress,
           averageRating: analytics.averageMood,
         },
@@ -494,6 +594,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
             startTime: new Date(session.startTime),
           }));
         }
+
+        if (!parsedState.favoriteSoundIds) {
+          parsedState.favoriteSoundIds = [];
+        }
+
+        // Handle sound presets dates
+        if (parsedState.soundPresets) {
+          parsedState.soundPresets = parsedState.soundPresets.map((preset: any) => ({
+            ...preset,
+            createdAt: new Date(preset.createdAt),
+          }));
+        }
         
         // Ensure all required fields exist
         const stateWithDefaults = {
@@ -542,14 +654,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ticking: {
               enabled: settings.sounds_ticking ?? false,
               selectedSound: settings.sound_ticking_type ?? 'ticking-classic-clock',
+              volume: 0.8,
             },
             breathing: {
               enabled: settings.sounds_breathing ?? false,
               selectedSound: settings.sound_breathing_type ?? 'breathing-deep-calm',
+              volume: 0.7,
             },
             nature: {
               enabled: settings.sounds_nature ?? false,
               selectedSound: settings.sound_nature_type ?? 'nature-gentle-rain',
+              volume: 0.6,
             },
           },
         });

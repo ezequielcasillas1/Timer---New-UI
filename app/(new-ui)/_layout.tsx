@@ -13,6 +13,10 @@ export default function NewUILayout() {
       <Stack.Screen name="analytics" />
       <Stack.Screen name="session" />
       <Stack.Screen name="sounds" />
+      <Stack.Screen name="favorites" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="scheduler" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }
