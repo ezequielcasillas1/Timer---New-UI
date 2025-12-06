@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Flow Focus",
+    "slug": "flow-focus",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/natively-dark.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/natively-dark.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.flowfocus.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSMicrophoneUsageDescription": "This app uses audio for focus sessions and ambient sounds.",
+        "NSCameraUsageDescription": "This app may use camera for profile pictures."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/natively-dark.png",
+        "backgroundColor": "#000000"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.flowfocus.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/final_quest_240x240.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      "expo-av"
+    ],
+    "scheme": "flowfocus",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aad92bd6-dd5a-4e7d-9ba8-ae43ab834b0b"
+      },
+      "supabaseUrl": "https://brwhhkmjyadcaasqggtd.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyd2hoa21qeWFkY2Fhc3FnZ3RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MDc3MTksImV4cCI6MjA3NTQ4MzcxOX0.lxygT-dYwguqyuHmSW2S2wUcAJf-uY25opKRs9yNXWY"
+    },
+    "owner": "casiezeq"
+  }
+}

@@ -1,0 +1,468 @@
+import React, { useEffect, useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity,
+  Dimensions,
+  Platform
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack, useRouter } from 'expo-router';
+import { IconSymbol } from '@/components/IconSymbol';
+import Svg, { Circle, G } from 'react-native-svg';
+import { useAppContext } from '@/src/context/AppContext';
+
+const newUIColors = {
+  background: '#E8F4F8',
+  card: '#FFFFFF',
+  primary: '#7EC8E3',
+  secondary: '#B8E0D2',
+  text: '#2C3E50',
+  textSecondary: '#7F8C8D',
+  accent: '#A8D8EA',
+  progressLight: '#D4ECF5',
+};
+
+const { width } = Dimensions.get('window');
+const CIRCLE_SIZE = width * 0.6;
+const STROKE_WIDTH = 12;
+const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+export default function AnalyticsScreen() {
+  const router = useRouter();
+  const { state } = useAppContext();
+  const [progress, setProgress] = useState(0);
+  
+  // Calculate real progress from state
+  const totalSessions = state.progress.totalSessions || 0;
+  const goalSessions = 20; // Weekly goal
+  const progressPercentage = Math.min((totalSessions / goalSessions) * 100, 100);
+  
+  useEffect(() => {
+    // Animate progress
+    const timer = setTimeout(() => {
+      setProgress(progressPercentage);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [progressPercentage]);
+
+  const strokeDashoffset = CIRCUMFERENCE - (CIRCUMFERENCE * progress) / 100;
+
+  const stats = [
+    {
+      icon: 'timer',
+      label: 'Total time',
+      value: `${Math.floor(state.progress.totalMinutes || 0)} min`,
+      color: newUIColors.primary,
+    },
+    {
+      icon: 'calendar',
+      label: 'Consistency streak',
+      value: `${state.progress.currentStreak || 0} days`,
+      color: newUIColors.secondary,
+    },
+    {
+      icon: 'moon.fill',
+      label: 'Mood balance',
+      value: '8.9',
+      color: newUIColors.accent,
+    },
+    {
+      icon: 'chart.line.uptrend.xyaxis',
+      label: 'Avg per month',
+      value: '4 per month',
+      color: '#9ED9CC',
+    },
+  ];
+
+  const recentMoments = [
+    { date: 'Today', activity: 'Calm Focus', duration: '20 min', emoji: '🌊' },
+    { date: 'Yesterday', activity: 'Mindful Minutes', duration: '15 min', emoji: '🧘' },
+    { date: '2 days ago', activity: 'Breathe & Begin', duration: '25 min', emoji: '🍃' },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>Analytics</Text>
+          
+          <TouchableOpacity>
+            <IconSymbol name="gearshape" size={24} color={newUIColors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Circular Progress */}
+          <View style={styles.progressSection}>
+            <View style={styles.circleContainer}>
+              <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
+                <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
+                  {/* Background Circle */}
+                  <Circle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={RADIUS}
+                    stroke={newUIColors.progressLight}
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
+                  />
+                  {/* Progress Circle */}
+                  <Circle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={RADIUS}
+                    stroke={newUIColors.primary}
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </G>
+              </Svg>
+              
+              {/* Center Content */}
+              <View style={styles.centerContent}>
+                <Text style={styles.progressPercentage}>{Math.round(progress)}%</Text>
+                <Text style={styles.progressLabel}>Total progress</Text>
+              </View>
+            </View>
+            
+            {/* Stats Grid */}
+            <View style={styles.statsGrid}>
+              <View style={styles.statRow}>
+                <View style={styles.statItem}>
+                  <IconSymbol name="checkmark.circle.fill" size={16} color={newUIColors.primary} />
+                  <Text style={styles.statValue}>Meditation days</Text>
+                  <Text style={styles.statLabel}>{Math.round(progress)}%</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <IconSymbol name="xmark.circle.fill" size={16} color="#FF6B6B" />
+                  <Text style={styles.statValue}>Missed days</Text>
+                  <Text style={styles.statLabel}>{100 - Math.round(progress)}%</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Moments of Growth Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Moments of Growth</Text>
+              <TouchableOpacity>
+                <IconSymbol name="chevron.right" size={20} color={newUIColors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Stats Cards */}
+          <View style={styles.statsCardsGrid}>
+            {stats.map((stat, index) => (
+              <View key={index} style={styles.statCard}>
+                <View style={[styles.statIconContainer, { backgroundColor: stat.color + '20' }]}>
+                  <IconSymbol name={stat.icon} size={24} color={stat.color} />
+                </View>
+                <Text style={styles.statCardValue}>{stat.value}</Text>
+                <Text style={styles.statCardLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Recent Activity */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            {recentMoments.map((moment, index) => (
+              <View key={index} style={styles.activityCard}>
+                <View style={[styles.activityIcon, { backgroundColor: newUIColors.primary + '20' }]}>
+                  <Text style={styles.activityEmoji}>{moment.emoji}</Text>
+                </View>
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityTitle}>{moment.activity}</Text>
+                  <Text style={styles.activityDate}>{moment.date}</Text>
+                </View>
+                <Text style={styles.activityDuration}>{moment.duration}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Bottom Message */}
+          <View style={styles.bottomMessage}>
+            <Text style={styles.bottomMessageText}>
+              An easy way to take care of yourself. Short meditations for any moment of the day.
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/home')}>
+            <IconSymbol name="house" size={24} color={newUIColors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <IconSymbol name="chart.bar.fill" size={24} color={newUIColors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <IconSymbol name="heart" size={24} color={newUIColors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: newUIColors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: newUIColors.text,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  progressSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingVertical: 20,
+  },
+  circleContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  centerContent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressPercentage: {
+    fontSize: 56,
+    fontWeight: '700',
+    color: newUIColors.text,
+    marginBottom: 4,
+  },
+  progressLabel: {
+    fontSize: 16,
+    color: newUIColors.textSecondary,
+    fontWeight: '500',
+  },
+  statsGrid: {
+    width: '100%',
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 14,
+    color: newUIColors.text,
+    fontWeight: '500',
+  },
+  statLabel: {
+    fontSize: 18,
+    color: newUIColors.text,
+    fontWeight: '600',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: newUIColors.text,
+  },
+  statsCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    width: (width - 52) / 2,
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statCardValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: newUIColors.text,
+    marginBottom: 4,
+  },
+  statCardLabel: {
+    fontSize: 13,
+    color: newUIColors.textSecondary,
+    textAlign: 'center',
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  activityIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  activityEmoji: {
+    fontSize: 24,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: newUIColors.text,
+    marginBottom: 4,
+  },
+  activityDate: {
+    fontSize: 14,
+    color: newUIColors.textSecondary,
+  },
+  activityDuration: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: newUIColors.text,
+  },
+  bottomMessage: {
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  bottomMessageText: {
+    fontSize: 15,
+    color: newUIColors.textSecondary,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    backgroundColor: newUIColors.card,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    justifyContent: 'space-around',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  navItem: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+
+
