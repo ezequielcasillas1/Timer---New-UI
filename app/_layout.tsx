@@ -4,24 +4,14 @@ import { StatusBar } from 'expo-status-bar';
 import { AppProvider } from '@/src/context/AppContext';
 import { AuthProvider } from '@/src/context/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { colors } from '@/styles/commonStyles';
-import React, { useEffect } from 'react';
-import { soundService } from '@/src/services/SoundService';
+import React from 'react';
+
+// New UI colors
+const newUIColors = {
+  background: '#E8F4F8', // Soft light blue
+};
 
 export default function RootLayout() {
-  useEffect(() => {
-    // Initialize sound service on app start
-    const initializeSounds = async () => {
-      console.log('App: Initializing sound service...');
-      await soundService.initialize();
-      console.log('App: Sound service ready - sounds will stream on-demand from Freesound CDN');
-    };
-
-    initializeSounds().catch((error) => {
-      console.error('App: Error initializing sounds:', error);
-    });
-  }, []);
-
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -29,10 +19,10 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
+              contentStyle: { backgroundColor: newUIColors.background },
             }}
           />
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
         </AppProvider>
       </AuthProvider>
     </ErrorBoundary>
