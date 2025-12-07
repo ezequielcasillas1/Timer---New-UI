@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,8 @@ import {
   Alert,
   StatusBar,
   Modal,
-  TextInput
+  TextInput,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -35,7 +36,6 @@ export default function NewSessionScreen() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showEndFlow, setShowEndFlow] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [aiAdvice, setAiAdvice] = useState<string>('Take a short stretch and hydrate before your next focus block.');
   const [endNote, setEndNote] = useState<string>('');
   const [lastSessionDuration, setLastSessionDuration] = useState(0); // seconds
   const [lastSoundsUsed, setLastSoundsUsed] = useState<string[]>([]);
@@ -48,6 +48,15 @@ export default function NewSessionScreen() {
   });
   const [isPaused, setIsPaused] = useState(false);
   const [showSessionSettings, setShowSessionSettings] = useState(false);
+  const [followUpNote, setFollowUpNote] = useState<string>('');
+  const [isSavingFollowUp, setIsSavingFollowUp] = useState(false);
+  const [isFollowUpSaved, setIsFollowUpSaved] = useState(false);
+  const [isSavingQuickNote, setIsSavingQuickNote] = useState(false);
+  const [isQuickNoteSaved, setIsQuickNoteSaved] = useState(false);
+  
+  // Animation for loading spinners
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spinValue2 = useRef(new Animated.Value(0)).current;
 
   const favoriteSounds = state.favoriteSoundIds
     .map((id) => SOUND_LIBRARY.find((s) => s.id === id))
@@ -67,6 +76,86 @@ export default function NewSessionScreen() {
       setIsRunning(false);
     }
   }, []);
+
+  // Spinning animation for follow-up loading indicator
+  useEffect(() => {
+    if (isSavingFollowUp) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.setValue(0);
+    }
+  }, [isSavingFollowUp, spinValue]);
+
+  // Spinning animation for quick note loading indicator
+  useEffect(() => {
+    if (isSavingQuickNote) {
+      Animated.loop(
+        Animated.timing(spinValue2, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue2.setValue(0);
+    }
+  }, [isSavingQuickNote, spinValue2]);
+
+  // Auto-save follow-up note with debouncing
+  useEffect(() => {
+    if (followUpNote.trim() === '') {
+      setIsFollowUpSaved(false);
+      return;
+    }
+
+    setIsSavingFollowUp(true);
+    setIsFollowUpSaved(false);
+
+    const timeoutId = setTimeout(() => {
+      // Save the follow-up note to context/state
+      dispatch({
+        type: 'ADD_FOLLOW_UP_NOTE',
+        payload: {
+          note: followUpNote,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      
+      setIsSavingFollowUp(false);
+      setIsFollowUpSaved(true);
+      
+      console.log('Follow-up note auto-saved:', followUpNote);
+    }, 1500); // 1.5 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [followUpNote, dispatch]);
+
+  // Auto-save quick note with debouncing
+  useEffect(() => {
+    if (endNote.trim() === '') {
+      setIsQuickNoteSaved(false);
+      return;
+    }
+
+    setIsSavingQuickNote(true);
+    setIsQuickNoteSaved(false);
+
+    const timeoutId = setTimeout(() => {
+      // Save the quick note to session
+      console.log('Quick note auto-saved:', endNote);
+      
+      setIsSavingQuickNote(false);
+      setIsQuickNoteSaved(true);
+    }, 1500); // 1.5 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [endNote]);
 
   const handleTimeSlotChange = (duration: 15 | 30 | 50 | 60) => {
     dispatch({
@@ -217,12 +306,6 @@ export default function NewSessionScreen() {
         payload: { duration: durationSeconds },
       });
 
-      const durationMinutes = Math.floor(durationSeconds / 60);
-      setAiAdvice(
-        durationMinutes > 20
-          ? 'Nice work! Try a 2-minute breathing exercise before the next session.'
-          : 'Great quick win. Consider enabling Nature + Breathing layers together next time.'
-      );
       setShowEndFlow(true);
     } else {
       // Start session
@@ -1066,19 +1149,109 @@ export default function NewSessionScreen() {
             </View>
 
             <Text style={styles.endPrompt}>Quick note (optional)</Text>
-            <TextInput
-              value={endNote}
-              onChangeText={setEndNote}
-              placeholder="E.g. Needed more nature sounds, felt productive..."
-              placeholderTextColor={newUIColors.textSecondary}
-              multiline
-              numberOfLines={3}
-              style={styles.endInput}
-            />
+            <View style={styles.quickNoteContainer}>
+              <TextInput
+                value={endNote}
+                onChangeText={setEndNote}
+                placeholder="Document your journey: Session highlights, focus wins, improvements noted..."
+                placeholderTextColor={newUIColors.textSecondary}
+                multiline
+                numberOfLines={3}
+                style={styles.endInput}
+              />
+              {endNote.trim() !== '' && (
+                <View style={styles.quickNoteSaveIndicator}>
+                  {isSavingQuickNote ? (
+                    <View style={styles.loadingContainer}>
+                      <Animated.View
+                        style={[
+                          styles.loadingSpinner,
+                          {
+                            transform: [
+                              {
+                                rotate: spinValue2.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: ['0deg', '360deg'],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
+                      />
+                      <Text style={styles.saveIndicatorText}>Saving...</Text>
+                    </View>
+                  ) : isQuickNoteSaved ? (
+                    <View style={styles.savedContainer}>
+                      <IconSymbol name="checkmark.circle.fill" size={20} color="#10B981" />
+                      <Text style={[styles.saveIndicatorText, { color: '#10B981' }]}>Saved</Text>
+                    </View>
+                  ) : null}
+                </View>
+              )}
+            </View>
 
-            <View style={styles.adviceCard}>
-              <IconSymbol name="sparkles" size={18} color={newUIColors.primary} />
-              <Text style={styles.adviceText}>{aiAdvice}</Text>
+            {/* Follow-up Section */}
+            <View style={styles.followUpSection}>
+              <Text style={styles.followUpTitle}>Follow up:</Text>
+              <Text style={styles.followUpDescription}>
+                How may we better improve your focus? Need help performing better? 
+                We can help with anxiety, worry, fear, and doubt.
+              </Text>
+              
+              {/* Auto-save text input */}
+              <View style={styles.followUpInputContainer}>
+                <TextInput
+                  value={followUpNote}
+                  onChangeText={setFollowUpNote}
+                  placeholder="Share what's on your mind..."
+                  placeholderTextColor={newUIColors.textSecondary}
+                  multiline
+                  numberOfLines={3}
+                  style={styles.followUpInput}
+                  maxLength={500}
+                />
+                {followUpNote.trim() !== '' && (
+                  <View style={styles.followUpSaveIndicator}>
+                    {isSavingFollowUp ? (
+                      <View style={styles.loadingContainer}>
+                        <Animated.View
+                          style={[
+                            styles.loadingSpinner,
+                            {
+                              transform: [
+                                {
+                                  rotate: spinValue.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0deg', '360deg'],
+                                  }),
+                                },
+                              ],
+                            },
+                          ]}
+                        />
+                        <Text style={styles.saveIndicatorText}>Saving...</Text>
+                      </View>
+                    ) : isFollowUpSaved ? (
+                      <View style={styles.savedContainer}>
+                        <IconSymbol name="checkmark.circle.fill" size={20} color="#10B981" />
+                        <Text style={[styles.saveIndicatorText, { color: '#10B981' }]}>Saved</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity 
+                style={styles.journeyButton}
+                onPress={() => {
+                  setShowEndFlow(false);
+                  router.push('/(new-ui)/journey');
+                }}
+              >
+                <IconSymbol name="chart.line.uptrend.xyaxis" size={20} color="#FFFFFF" />
+                <Text style={styles.journeyButtonText}>View Your Journey</Text>
+                <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.endSummary}>
@@ -1734,23 +1907,106 @@ const styles = StyleSheet.create({
     color: newUIColors.text,
     minHeight: 80,
     textAlignVertical: 'top',
+    marginBottom: 8,
+  },
+  quickNoteContainer: {
     marginBottom: 12,
   },
-  adviceCard: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary + '12',
+  quickNoteSaveIndicator: {
+    alignItems: 'flex-end',
+    paddingRight: 4,
+    marginBottom: 4,
+  },
+  followUpSection: {
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: newUIColors.card,
     borderWidth: 1,
-    borderColor: newUIColors.primary + '25',
+    borderColor: newUIColors.primary + '30',
+    marginBottom: 16,
+    gap: 12,
+  },
+  followUpTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: newUIColors.text,
+    marginBottom: 4,
+  },
+  followUpDescription: {
+    fontSize: 14,
+    color: newUIColors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  journeyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: newUIColors.primary,
+    ...Platform.select({
+      ios: {
+        shadowColor: newUIColors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  journeyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+  },
+  followUpInputContainer: {
     marginBottom: 12,
   },
-  adviceText: {
-    flex: 1,
+  followUpInput: {
+    backgroundColor: newUIColors.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '25',
+    padding: 12,
     color: newUIColors.text,
     fontSize: 14,
-    lineHeight: 20,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 8,
+  },
+  followUpSaveIndicator: {
+    alignItems: 'flex-end',
+    paddingRight: 4,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  loadingSpinner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: newUIColors.primary + '30',
+    borderTopColor: newUIColors.primary,
+  },
+  savedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  saveIndicatorText: {
+    fontSize: 12,
+    color: newUIColors.textSecondary,
+    fontWeight: '600',
   },
   endSummary: {
     marginBottom: 12,

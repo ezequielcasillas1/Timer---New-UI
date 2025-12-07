@@ -131,24 +131,6 @@ export default function NewUIHome() {
     });
   };
 
-  const handleAutoSchedule = () => {
-    const startTime = new Date();
-    startTime.setHours(startTime.getHours() + 1, 0, 0, 0);
-
-    dispatch({
-      type: 'ADD_SCHEDULED_SESSION',
-      payload: {
-        id: Date.now().toString(),
-        title: 'Auto Suggested Session',
-        startTime,
-        duration: state.session.targetDuration || 20,
-        mode: 'speed',
-        isRecurring: false,
-        isEnabled: true,
-      },
-    });
-  };
-
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = Math.floor(minutes % 60);
@@ -322,28 +304,6 @@ export default function NewUIHome() {
               <IconSymbol name="chevron.right" size={20} color="rgba(255, 255, 255, 0.9)" />
             </View>
           </TouchableOpacity>
-
-          {/* Automated Scheduler */}
-          <View style={styles.autoCard}>
-            <View style={styles.autoHeader}>
-              <View style={styles.autoIcon}>
-                <IconSymbol name="calendar.badge.clock" size={22} color={newUIColors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.autoTitle}>Automated Session Scheduler</Text>
-                <Text style={styles.autoDescription}>
-                  We’ll line up your next session with your current preset.
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.autoAction} onPress={handleAutoSchedule}>
-                <IconSymbol name="plus" size={18} color="#FFFFFF" />
-                <Text style={styles.autoActionText}>Schedule</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.autoHint}>
-              Creates a one-time session an hour from now using your latest settings.
-            </Text>
-          </View>
 
           {/* Progress Card */}
           <View style={styles.progressCard}>
@@ -691,67 +651,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.1,
     lineHeight: 20,
-  },
-  autoCard: {
-    backgroundColor: newUIColors.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: newUIColors.textSecondary + '25',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  autoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  autoIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  autoTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: newUIColors.text,
-  },
-  autoDescription: {
-    fontSize: 13,
-    color: newUIColors.textSecondary,
-    marginTop: 2,
-  },
-  autoAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary,
-  },
-  autoActionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  autoHint: {
-    marginTop: 10,
-    fontSize: 12,
-    color: newUIColors.textSecondary,
   },
   // Progress Card
   progressCard: {

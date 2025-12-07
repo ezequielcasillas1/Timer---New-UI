@@ -103,6 +103,12 @@ export interface AppSettings {
   scheduledSessions: ScheduledSession[];
 }
 
+export interface FollowUpNote {
+  id: string;
+  note: string;
+  timestamp: string;
+}
+
 export interface SoundPreset {
   id: string;
   name: string;
@@ -124,6 +130,7 @@ export interface AppState {
   settings: AppSettings;
   soundPresets: SoundPreset[]; // Sound presets storage
   favoriteSoundIds: string[]; // Hearted individual sounds for quick add
+  followUpNotes: FollowUpNote[]; // Follow-up notes from session completions
   analytics: SessionAnalytics | null; // Real-time analytics from Supabase
   isInitialized: boolean;
   isSyncing: boolean;
@@ -203,6 +210,7 @@ const initialState: AppState = {
   },
   soundPresets: [], // Sound presets array
   favoriteSoundIds: [],
+  followUpNotes: [], // Follow-up notes array
   analytics: null,
   isInitialized: false,
   isSyncing: false,
@@ -232,7 +240,8 @@ type AppAction =
   | { type: 'UPDATE_SOUND_PRESET'; payload: { id: string; updates: Partial<SoundPreset> } }
   | { type: 'DELETE_SOUND_PRESET'; payload: string }
   | { type: 'TOGGLE_PRESET_FAVORITE'; payload: string }
-  | { type: 'TOGGLE_FAVORITE_SOUND'; payload: string };
+  | { type: 'TOGGLE_FAVORITE_SOUND'; payload: string }
+  | { type: 'ADD_FOLLOW_UP_NOTE'; payload: { note: string; timestamp: string } };
 
 // Reducer
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -456,6 +465,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
         favoriteSoundIds: exists
           ? state.favoriteSoundIds.filter((id) => id !== action.payload)
           : [...state.favoriteSoundIds, action.payload],
+      };
+    }
+
+    case 'ADD_FOLLOW_UP_NOTE': {
+      const newNote: FollowUpNote = {
+        id: Date.now().toString(),
+        note: action.payload.note,
+        timestamp: action.payload.timestamp,
+      };
+      return {
+        ...state,
+        followUpNotes: [newNote, ...state.followUpNotes],
       };
     }
 

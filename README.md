@@ -342,7 +342,6 @@ All requirements from `MoreRequirements.md` have been implemented:
 - Preset duplication feature
 - Settings adjustment during active sessions
 - Weekly analytics chart
-- Automated session scheduler
 
 ## Next Steps
 
