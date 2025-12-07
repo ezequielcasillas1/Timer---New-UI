@@ -10,8 +10,12 @@ import {
   Alert,
   StatusBar,
   Modal,
+<<<<<<< HEAD
   TextInput,
   Animated
+=======
+  TextInput
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -36,6 +40,10 @@ export default function NewSessionScreen() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showEndFlow, setShowEndFlow] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+<<<<<<< HEAD
+=======
+  const [aiAdvice, setAiAdvice] = useState<string>('Take a short stretch and hydrate before your next focus block.');
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   const [endNote, setEndNote] = useState<string>('');
   const [lastSessionDuration, setLastSessionDuration] = useState(0); // seconds
   const [lastSoundsUsed, setLastSoundsUsed] = useState<string[]>([]);
@@ -48,6 +56,7 @@ export default function NewSessionScreen() {
   });
   const [isPaused, setIsPaused] = useState(false);
   const [showSessionSettings, setShowSessionSettings] = useState(false);
+<<<<<<< HEAD
   const [followUpNote, setFollowUpNote] = useState<string>('');
   const [isSavingFollowUp, setIsSavingFollowUp] = useState(false);
   const [isFollowUpSaved, setIsFollowUpSaved] = useState(false);
@@ -57,6 +66,8 @@ export default function NewSessionScreen() {
   // Animation for loading spinners
   const spinValue = useRef(new Animated.Value(0)).current;
   const spinValue2 = useRef(new Animated.Value(0)).current;
+=======
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
 
   const favoriteSounds = state.favoriteSoundIds
     .map((id) => SOUND_LIBRARY.find((s) => s.id === id))
@@ -77,6 +88,7 @@ export default function NewSessionScreen() {
     }
   }, []);
 
+<<<<<<< HEAD
   // Spinning animation for follow-up loading indicator
   useEffect(() => {
     if (isSavingFollowUp) {
@@ -229,6 +241,80 @@ export default function NewSessionScreen() {
     if (mins > 0) {
       return `${mins}m ${secs}s`;
     }
+=======
+  const handleTimeSlotChange = (duration: 15 | 30 | 50 | 60) => {
+    dispatch({
+      type: 'UPDATE_SESSION',
+      payload: { timeSlotDuration: duration },
+    });
+    clockService.setTimeSlotDuration(duration);
+    soundService.playHaptic('light');
+  };
+
+  const handleSlotEveryChange = (minutes: number) => {
+    dispatch({
+      type: 'UPDATE_SESSION',
+      payload: { slotEveryMinutes: minutes },
+    });
+    clockService.setSlotEveryMinutes(minutes);
+    soundService.playHaptic('light');
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    dispatch({
+      type: 'UPDATE_SESSION',
+      payload: { speedSetting: speed },
+    });
+    clockService.setSpeedMultiplier(speed);
+    soundService.playHaptic('light');
+  };
+
+  const handleDurationChange = (minutes: number) => {
+    dispatch({
+      type: 'UPDATE_SESSION',
+      payload: { targetDuration: minutes },
+    });
+    soundService.playHaptic('light');
+  };
+
+  const handleSelectFavoriteSound = (soundId: string) => {
+    const soundDef = SOUND_LIBRARY.find((s) => s.id === soundId);
+    if (!soundDef) return;
+
+    dispatch({
+      type: 'UPDATE_SOUNDS',
+      payload: {
+        [soundDef.category]: {
+          ...state.sounds[soundDef.category],
+          selectedSound: soundDef.id,
+          enabled: true,
+        },
+      },
+    });
+    soundService.playHaptic('light');
+  };
+
+  const handleSelectSound = (category: 'ticking' | 'breathing' | 'nature', soundId: string) => {
+    dispatch({
+      type: 'UPDATE_SOUNDS',
+      payload: {
+        [category]: {
+          ...state.sounds[category],
+          selectedSound: soundId,
+          enabled: true,
+        },
+      },
+    });
+    soundService.playHaptic('light');
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
     return `${secs}s`;
   };
 
@@ -306,6 +392,15 @@ export default function NewSessionScreen() {
         payload: { duration: durationSeconds },
       });
 
+<<<<<<< HEAD
+=======
+      const durationMinutes = Math.floor(durationSeconds / 60);
+      setAiAdvice(
+        durationMinutes > 20
+          ? 'Nice work! Try a 2-minute breathing exercise before the next session.'
+          : 'Great quick win. Consider enabling Nature + Breathing layers together next time.'
+      );
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
       setShowEndFlow(true);
     } else {
       // Start session
@@ -1149,6 +1244,7 @@ export default function NewSessionScreen() {
             </View>
 
             <Text style={styles.endPrompt}>Quick note (optional)</Text>
+<<<<<<< HEAD
             <View style={styles.quickNoteContainer}>
               <TextInput
                 value={endNote}
@@ -1252,6 +1348,21 @@ export default function NewSessionScreen() {
                 <Text style={styles.journeyButtonText}>View Your Journey</Text>
                 <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
               </TouchableOpacity>
+=======
+            <TextInput
+              value={endNote}
+              onChangeText={setEndNote}
+              placeholder="E.g. Needed more nature sounds, felt productive..."
+              placeholderTextColor={newUIColors.textSecondary}
+              multiline
+              numberOfLines={3}
+              style={styles.endInput}
+            />
+
+            <View style={styles.adviceCard}>
+              <IconSymbol name="sparkles" size={18} color={newUIColors.primary} />
+              <Text style={styles.adviceText}>{aiAdvice}</Text>
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
             </View>
 
             <View style={styles.endSummary}>
@@ -1907,6 +2018,7 @@ const styles = StyleSheet.create({
     color: newUIColors.text,
     minHeight: 80,
     textAlignVertical: 'top',
+<<<<<<< HEAD
     marginBottom: 8,
   },
   quickNoteContainer: {
@@ -2007,6 +2119,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: newUIColors.textSecondary,
     fontWeight: '600',
+=======
+    marginBottom: 12,
+  },
+  adviceCard: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: newUIColors.primary + '12',
+    borderWidth: 1,
+    borderColor: newUIColors.primary + '25',
+    marginBottom: 12,
+  },
+  adviceText: {
+    flex: 1,
+    color: newUIColors.text,
+    fontSize: 14,
+    lineHeight: 20,
+>>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   },
   endSummary: {
     marginBottom: 12,
