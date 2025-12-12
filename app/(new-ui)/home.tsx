@@ -131,27 +131,6 @@ export default function NewUIHome() {
     });
   };
 
-<<<<<<< HEAD
-=======
-  const handleAutoSchedule = () => {
-    const startTime = new Date();
-    startTime.setHours(startTime.getHours() + 1, 0, 0, 0);
-
-    dispatch({
-      type: 'ADD_SCHEDULED_SESSION',
-      payload: {
-        id: Date.now().toString(),
-        title: 'Auto Suggested Session',
-        startTime,
-        duration: state.session.targetDuration || 20,
-        mode: 'speed',
-        isRecurring: false,
-        isEnabled: true,
-      },
-    });
-  };
-
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = Math.floor(minutes % 60);
@@ -317,8 +296,8 @@ export default function NewUIHome() {
                 <IconSymbol name="play.circle.fill" size={32} color="#FFFFFF" />
               </View>
               <View style={styles.startSessionText}>
-                <Text style={styles.startSessionTitle}>Start Session</Text>
-                <Text style={styles.startSessionDescription}>
+                <Text style={styles.startSessionTitle} numberOfLines={1}>Start Session</Text>
+                <Text style={styles.startSessionDescription} numberOfLines={2}>
                   Configure and begin your focus session
                 </Text>
               </View>
@@ -326,31 +305,6 @@ export default function NewUIHome() {
             </View>
           </TouchableOpacity>
 
-<<<<<<< HEAD
-=======
-          {/* Automated Scheduler */}
-          <View style={styles.autoCard}>
-            <View style={styles.autoHeader}>
-              <View style={styles.autoIcon}>
-                <IconSymbol name="calendar.badge.clock" size={22} color={newUIColors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.autoTitle}>Automated Session Scheduler</Text>
-                <Text style={styles.autoDescription}>
-                  We’ll line up your next session with your current preset.
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.autoAction} onPress={handleAutoSchedule}>
-                <IconSymbol name="plus" size={18} color="#FFFFFF" />
-                <Text style={styles.autoActionText}>Schedule</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.autoHint}>
-              Creates a one-time session an hour from now using your latest settings.
-            </Text>
-          </View>
-
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
           {/* Progress Card */}
           <View style={styles.progressCard}>
             <Text style={styles.cardTitle}>Your Progress</Text>
@@ -423,8 +377,8 @@ export default function NewUIHome() {
             <View style={styles.schedulerContent}>
               <IconSymbol name="calendar" size={24} color={newUIColors.primary} />
               <View style={styles.schedulerText}>
-                <Text style={styles.schedulerTitle}>Session Scheduler</Text>
-                <Text style={styles.schedulerDescription}>
+                <Text style={styles.schedulerTitle} numberOfLines={1}>Session Scheduler</Text>
+                <Text style={styles.schedulerDescription} numberOfLines={2}>
                   Automate your sessions with scheduled start times
                 </Text>
               </View>
@@ -439,8 +393,8 @@ export default function NewUIHome() {
               onPress={() => router.push('/(new-ui)/analytics')}
             >
               <IconSymbol name="chart.bar.fill" size={28} color={newUIColors.primary} />
-              <Text style={styles.navCardTitle}>Analytics</Text>
-              <Text style={styles.navCardDescription}>View your progress</Text>
+              <Text style={styles.navCardTitle} numberOfLines={1}>Analytics</Text>
+              <Text style={styles.navCardDescription} numberOfLines={2}>View your progress</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -448,8 +402,8 @@ export default function NewUIHome() {
               onPress={() => router.push('/(new-ui)/sounds')}
             >
               <IconSymbol name="speaker.wave.3.fill" size={28} color={newUIColors.secondary} />
-              <Text style={styles.navCardTitle}>Sounds</Text>
-              <Text style={styles.navCardDescription}>Manage sound library</Text>
+              <Text style={styles.navCardTitle} numberOfLines={1}>Sounds</Text>
+              <Text style={styles.navCardDescription} numberOfLines={2}>Manage sound library</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -624,43 +578,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: newUIColors.textSecondary + '30',
-<<<<<<< HEAD
-    backgroundColor: newUIColors.card,
-  },
-  rangePillActive: {
-    backgroundColor: newUIColors.primary,
-    borderColor: newUIColors.primary,
-  },
-  rangePillText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: newUIColors.textSecondary,
-  },
-  rangePillTextActive: {
-    color: '#FFFFFF',
-  },
-  chartFooter: {
-    fontSize: 13,
-    color: newUIColors.textSecondary,
-    textAlign: 'center',
-    marginTop: 16,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  // Start Session Card
-  startSessionCard: {
-    backgroundColor: newUIColors.primary,
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: newUIColors.primary,
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-=======
     backgroundColor: newUIColors.card,
   },
   rangePillActive: {
@@ -719,60 +636,7 @@ const styles = StyleSheet.create({
   },
   startSessionText: {
     flex: 1,
-  },
-  startSessionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 6,
-    letterSpacing: -0.3,
-    lineHeight: 28,
-  },
-  startSessionDescription: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.95)',
-    fontWeight: '500',
-    letterSpacing: -0.1,
-    lineHeight: 20,
-  },
-  autoCard: {
-    backgroundColor: newUIColors.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: newUIColors.textSecondary + '25',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
-  },
-<<<<<<< HEAD
-  startSessionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  startSessionIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 18,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  startSessionText: {
-    flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
   },
   startSessionTitle: {
     fontSize: 22,
@@ -867,141 +731,12 @@ const styles = StyleSheet.create({
   },
   prepCardText: {
     fontSize: 15,
-=======
-  autoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  autoIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  autoTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: newUIColors.text,
-  },
-  autoDescription: {
-    fontSize: 13,
-    color: newUIColors.textSecondary,
-    marginTop: 2,
-  },
-  autoAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary,
-  },
-  autoActionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  autoHint: {
-    marginTop: 10,
-    fontSize: 12,
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
     color: newUIColors.textSecondary,
     lineHeight: 22,
     marginBottom: 20,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
-<<<<<<< HEAD
-=======
-  // Progress Card
-  progressCard: {
-    backgroundColor: newUIColors.card,
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(126, 200, 227, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: newUIColors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: newUIColors.text,
-    marginBottom: 20,
-    letterSpacing: -0.3,
-  },
-  progressStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
-  },
-  progressStat: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  progressStatValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: newUIColors.primary,
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  progressStatLabel: {
-    fontSize: 13,
-    color: newUIColors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  // Prep for Today's Work Card
-  prepCard: {
-    backgroundColor: newUIColors.card,
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(126, 200, 227, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: newUIColors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  prepCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 14,
-  },
-  prepCardText: {
-    fontSize: 15,
-    color: newUIColors.textSecondary,
-    lineHeight: 22,
-    marginBottom: 20,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   prepCardButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1103,6 +838,7 @@ const styles = StyleSheet.create({
   schedulerText: {
     flex: 1,
     marginLeft: 18,
+    minWidth: 0, // Allow flex child to shrink below content size
   },
   schedulerTitle: {
     fontSize: 19,
@@ -1197,6 +933,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 });
-
 
 

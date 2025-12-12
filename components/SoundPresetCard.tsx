@@ -127,8 +127,8 @@ export default function SoundPresetCard({
           <Text style={[styles.presetName, { color: textColor }]} numberOfLines={1}>
             {preset.name}
           </Text>
-          <Text style={[styles.presetSounds, { color: textColor + '80' }]}>
-            {enabledSounds.length} sound{enabledSounds.length !== 1 ? 's' : ''}
+          <Text style={[styles.presetSounds, { color: textColor + '80' }]} numberOfLines={1}>
+            {enabledSounds.length} sound{enabledSounds.length !== 1 ? 's' : ''} • {enabledSounds.join(', ')}
           </Text>
         </View>
 
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
   },
   presetInfo: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
   },
   presetName: {
     fontSize: 16,
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
   },
   presetSounds: {
     fontSize: 12,
+    flexShrink: 1,
   },
   heartButton: {
     width: 40,

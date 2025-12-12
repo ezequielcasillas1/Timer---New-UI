@@ -20,23 +20,25 @@ let currentAudioMode: 'playback' | 'recording' = 'playback';
  * Safe to call multiple times - will only initialize once
  */
 export async function initializeAudioMode(): Promise<void> {
+  // Don't skip re-initialization - audio mode can be reset by iOS
+  // Just log if we're re-initializing
   if (isAudioModeInitialized) {
-    console.log('AudioConfig: Already initialized, skipping');
-    return;
+    console.log('AudioConfig: Re-initializing audio mode...');
+  } else {
+    console.log('AudioConfig: Initializing playback-only audio mode...');
   }
-
-  console.log('AudioConfig: Initializing playback-only audio mode...');
 
   try {
     // Configure audio mode for PLAYBACK ONLY (no recording)
-    // This is the SAFEST mode for TestFlight and production
+    // CRITICAL: Use DoNotMix for background playback
+    // This prevents iOS from stopping audio when screen locks
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false, // ✅ NO recording - just playback
       staysActiveInBackground: true, // ✅ Continue when screen is off
       playsInSilentModeIOS: true, // ✅ Play even in silent mode
       shouldDuckAndroid: true, // Duck other audio on Android
       playThroughEarpieceAndroid: false, // Use speaker on Android
-      interruptionModeIOS: Audio.InterruptionModeIOS.DoNotMix, // ✅ CRITICAL: DoNotMix ensures audio continues when screen locks
+      interruptionModeIOS: Audio.InterruptionModeIOS.DoNotMix, // ✅ CRITICAL: DoNotMix + audio background mode = continuous playback
       interruptionModeAndroid: Audio.InterruptionModeAndroid.DoNotMix,
     });
 

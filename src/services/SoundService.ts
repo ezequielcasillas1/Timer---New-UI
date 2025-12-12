@@ -1,8 +1,9 @@
 
-import { Audio, AVPlaybackSource } from 'expo-av';
+import { Audio, AVPlaybackSource, AVPlaybackStatus } from 'expo-av';
 import * as Haptics from 'expo-haptics';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import { freesoundAPI } from './FreesoundAPI';
+import { initializeAudioMode } from './AudioConfig';
 
 /**
  * SOUND SERVICE - Audio Playback Implementation (Hybrid: Local + Streaming)
@@ -234,64 +235,149 @@ export class SoundService {
   private fadeOutTimers: { [key: string]: NodeJS.Timeout } = {};
   private crossfadeLoops: { [key: string]: { instances: Audio.Sound[], active: boolean, scheduledTimers: NodeJS.Timeout[] } } = {};
   private appStateSubscription: { remove: () => void } | null = null;
+  private keepAliveInterval: NodeJS.Timeout | null = null;
+  private activeSoundIds: Set<string> = new Set(); // Track which sounds should be playing
 
   async initialize() {
     console.log('SoundService: Initializing');
-    try {
-      // Set up audio mode for background playback - using MixWithOthers so sounds keep playing when app backgrounds
-      await this.setAudioModeForBackground();
+    
+    // Check if running on web - expo-av has limited web support
+    const isWeb = Platform.OS === 'web';
+    
+    if (isWeb) {
+      console.log('SoundService: Web platform detected - using simplified initialization');
       this.isInitialized = true;
-      console.log('SoundService: Initialized successfully with background playback');
+      console.log('SoundService: ✅ Initialized successfully (web mode)');
+      return;
+    }
+    
+    try {
+      // Use centralized audio configuration from AudioConfig
+      await initializeAudioMode();
+      this.isInitialized = true;
+      console.log('SoundService: ✅ Initialized with centralized audio config');
       
-      // Listen for when app goes to background/foreground so we can re-apply audio settings
+      // Set up app state listener for background handling
       this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
+      
+      // Start keep-alive mechanism to prevent iOS from stopping audio
+      this.startKeepAlive();
+      
+      console.log('SoundService: ✅ Background audio keep-alive started');
     } catch (error) {
-      console.log('SoundService: Error initializing audio:', error);
-      // Try without background/interruption settings
+      console.log('SoundService: ❌ Error initializing audio:', error);
+      // Fallback initialization
       try {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
         });
         this.isInitialized = true;
-        console.log('SoundService: Initialized with basic audio mode');
+        console.log('SoundService: ✅ Initialized with minimal config (fallback)');
       } catch (fallbackError) {
-        console.log('SoundService: Fallback initialization failed:', fallbackError);
+        console.log('SoundService: ❌ Fallback initialization failed:', fallbackError);
+        this.isInitialized = true;
+        console.log('SoundService: ⚠️ Initialized without audio mode');
       }
     }
   }
 
-  // Set audio mode for background playback
-  // MixWithOthers is the key here - it lets audio keep playing when the app goes to background
-  // DoNotMix doesn't work because iOS can revoke it when the app backgrounds
-  private async setAudioModeForBackground() {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true, // Keep playing when screen locks
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
-      interruptionModeIOS: Audio.InterruptionModeIOS.MixWithOthers, // This is what makes background audio work
-      interruptionModeAndroid: Audio.InterruptionModeAndroid.DuckOthers,
-    });
+  /**
+   * Keep-alive mechanism to prevent iOS from stopping background audio
+   * Periodically checks sound status and restores if needed
+   */
+  private startKeepAlive() {
+    // Clear existing interval if any
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+    }
+    
+    // Check sound status every 30 seconds
+    this.keepAliveInterval = setInterval(async () => {
+      if (!this.isInitialized || this.activeSoundIds.size === 0) return;
+      
+      console.log('SoundService: [KEEP-ALIVE] Checking sound status...');
+      
+      // Check each active crossfade loop
+      for (const soundId of this.activeSoundIds) {
+        const loop = this.crossfadeLoops[soundId];
+        if (!loop || !loop.active) {
+          console.log(`SoundService: [KEEP-ALIVE] ⚠️ Sound ${soundId} marked active but loop inactive, restoring...`);
+          await this.restoreSound(soundId);
+        } else if (loop.instances.length === 0) {
+          console.log(`SoundService: [KEEP-ALIVE] ⚠️ Sound ${soundId} has no instances, restoring...`);
+          await this.restoreSound(soundId);
+        }
+      }
+    }, 30000); // Every 30 seconds
   }
 
-  // Handle app state changes - re-apply audio mode when app goes to background or comes back
-  // This makes sure audio keeps playing when screen locks or user switches apps
+  /**
+   * Restore a sound that should be playing but isn't
+   */
+  private async restoreSound(soundId: string) {
+    try {
+      const soundDef = SOUND_LIBRARY.find(s => s.id === soundId);
+      if (!soundDef) return;
+      
+      console.log(`SoundService: [RESTORE] Restoring ${soundDef.title}...`);
+      
+      // Clean up any existing state
+      if (this.crossfadeLoops[soundId]) {
+        delete this.crossfadeLoops[soundId];
+      }
+      
+      // Restart the sound
+      await this.startCrossfadeLoop(soundId, soundDef, 1.0);
+      console.log(`SoundService: [RESTORE] ✅ ${soundDef.title} restored`);
+    } catch (error) {
+      console.log(`SoundService: [RESTORE] ❌ Error restoring ${soundId}:`, error);
+    }
+  }
+
+  /**
+   * Handle app state changes with sound restoration
+   */
   private handleAppStateChange = async (nextAppState: AppStateStatus) => {
     if (!this.isInitialized) return;
     
-    console.log(`SoundService: App state changed to: ${nextAppState}`);
+    console.log(`SoundService: [APP-STATE] Changed to: ${nextAppState}`);
     
-    // Re-apply audio settings when transitioning to/from background
-    // iOS sometimes resets audio mode, so we need to set it again
-    if (nextAppState === 'background' || nextAppState === 'active') {
+    if (nextAppState === 'active') {
+      // App came to foreground
+      console.log(`SoundService: [APP-STATE] App active, verifying sounds...`);
+      
+      // Re-initialize audio mode to ensure it's still set correctly
       try {
-        await this.setAudioModeForBackground();
-        console.log(`SoundService: Audio mode re-applied for ${nextAppState} state`);
+        await initializeAudioMode();
+        console.log(`SoundService: [APP-STATE] ✅ Audio mode re-initialized`);
       } catch (error) {
-        console.log('SoundService: Error re-applying audio mode:', error);
+        console.log('SoundService: [APP-STATE] ⚠️ Error re-initializing audio:', error);
       }
+      
+      // Check and restore any sounds that should be playing
+      for (const soundId of this.activeSoundIds) {
+        const loop = this.crossfadeLoops[soundId];
+        if (!loop || !loop.active || loop.instances.length === 0) {
+          console.log(`SoundService: [APP-STATE] Restoring ${soundId} after foreground...`);
+          await this.restoreSound(soundId);
+        } else {
+          // Verify instances are actually playing
+          for (const sound of loop.instances) {
+            try {
+              const status = await sound.getStatusAsync();
+              if (status.isLoaded && !status.isPlaying) {
+                console.log(`SoundService: [APP-STATE] Instance not playing, restarting...`);
+                await sound.playAsync();
+              }
+            } catch (error) {
+              console.log(`SoundService: [APP-STATE] Error checking instance:`, error);
+            }
+          }
+        }
+      }
+    } else if (nextAppState === 'background') {
+      console.log(`SoundService: [APP-STATE] App backgrounded, sounds should continue...`);
     }
   };
 
@@ -306,12 +392,16 @@ export class SoundService {
       return null;
     }
 
+    console.log(`🔊 [WEB DEBUG] Platform: ${Platform.OS}, Loading sound: ${soundDef.title}`);
+    
     try {
       let sound: Audio.Sound;
       
       if (soundDef.localFile) {
         // Load from bundled local file (instant, no network)
         console.log(`SoundService: Loading ${soundDef.title} from local file...`);
+        console.log(`🔊 [WEB DEBUG] Local file:`, soundDef.localFile);
+        
         const result = await Audio.Sound.createAsync(
           soundDef.localFile,
           { shouldPlay: false, isLooping: false }
@@ -338,14 +428,17 @@ export class SoundService {
       }
       
       this.sounds[soundId] = sound;
+      console.log(`🔊 [WEB DEBUG] Sound cached successfully: ${soundId}`);
       return sound;
     } catch (error) {
-      console.log(`SoundService: Error loading ${soundDef.title}:`, error);
+      console.error(`❌ [SoundService] Error loading ${soundId}:`, error);
+      console.error(`❌ [WEB DEBUG] Platform: ${Platform.OS}, Error details:`, error);
       return null;
     }
   }
 
-  async playSound(soundId: string, loop: boolean = true) {
+  async playSound(soundId: string, loop: boolean = true, volume: number = 1.0) {
+    console.log(`🔊 [SoundService] playSound called: ${soundId}, loop: ${loop}, volume: ${volume}, masterEnabled: ${this.masterEnabled}, initialized: ${this.isInitialized}`);
     if (!this.masterEnabled || !this.isInitialized) {
       console.log('SoundService: Sound disabled or not initialized');
       return;
@@ -363,12 +456,14 @@ export class SoundService {
       await this.stopSound(soundId);
     }
 
-    console.log(`SoundService: Playing ${soundDef.title} (loop: ${loop ? 'CROSSFADE' : 'ONCE'})`);
+    console.log(`SoundService: Playing ${soundDef.title} (loop: ${loop ? 'CROSSFADE' : 'ONCE'}, volume: ${Math.round(volume * 100)}%)`);
     
     try {
       if (loop) {
+        // Mark as active sound that should keep playing
+        this.activeSoundIds.add(soundId);
         // Use crossfade looping for seamless transitions
-        await this.startCrossfadeLoop(soundId, soundDef);
+        await this.startCrossfadeLoop(soundId, soundDef, volume);
       } else {
         // Single playback with fade-out
         const sound = await this.loadSound(soundId);
@@ -380,7 +475,7 @@ export class SoundService {
           this.currentlyPlaying.add(soundId);
           
           // Fade in over 1 second
-          this.fadeIn(sound, 1000);
+          this.fadeIn(sound, 1000, volume);
           
           // Schedule fade-out 2 seconds before end
           await this.scheduleFadeOutBeforeEnd(soundId, sound, 2000);
@@ -393,8 +488,8 @@ export class SoundService {
     }
   }
 
-  private async startCrossfadeLoop(soundId: string, soundDef: SoundDefinition) {
-    console.log(`[CROSSFADE] Starting crossfade loop for ${soundDef.title}`);
+  private async startCrossfadeLoop(soundId: string, soundDef: SoundDefinition, volume: number = 1.0) {
+    console.log(`[CROSSFADE] Starting crossfade loop for ${soundDef.title} at ${Math.round(volume * 100)}% volume`);
     
     // Initialize crossfade loop tracking
     this.crossfadeLoops[soundId] = {
@@ -406,10 +501,10 @@ export class SoundService {
     this.currentlyPlaying.add(soundId);
     
     // Start the first instance
-    await this.playNextCrossfadeInstance(soundId, soundDef, true);
+    await this.playNextCrossfadeInstance(soundId, soundDef, volume, true);
   }
 
-  private async playNextCrossfadeInstance(soundId: string, soundDef: SoundDefinition, isFirst: boolean = false) {
+  private async playNextCrossfadeInstance(soundId: string, soundDef: SoundDefinition, volume: number = 1.0, isFirst: boolean = false) {
     // Check if loop is still active
     if (!this.crossfadeLoops[soundId] || !this.crossfadeLoops[soundId].active) {
       console.log(`[CROSSFADE] Loop stopped for ${soundId}, not starting next instance`);
@@ -645,6 +740,9 @@ export class SoundService {
     
     console.log(`SoundService: 🛑 Stopping ${soundName}...`);
     
+    // Remove from active sounds (don't restore this)
+    this.activeSoundIds.delete(soundId);
+    
     // Clear any pending fade-out timer
     if (this.fadeOutTimers[soundId]) {
       clearTimeout(this.fadeOutTimers[soundId]);
@@ -744,6 +842,9 @@ export class SoundService {
 
   async forceStopAll() {
     console.log('SoundService: Force stopping all sounds');
+    
+    // Clear all active sound tracking
+    this.activeSoundIds.clear();
     
     // Clear all fade-out timers first
     for (const soundId in this.fadeOutTimers) {
@@ -870,13 +971,21 @@ export class SoundService {
     return Array.from(this.currentlyPlaying);
   }
 
-  // Clean up the app state listener when service is destroyed
+  // Clean up the app state listener and keep-alive when service is destroyed
   cleanup() {
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
       console.log('SoundService: Cleaned up app state listener');
     }
+    
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+      console.log('SoundService: Cleaned up keep-alive interval');
+    }
+    
+    this.activeSoundIds.clear();
   }
 }
 

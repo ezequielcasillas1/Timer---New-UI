@@ -67,6 +67,21 @@ export default function SoundsScreen() {
   const [selectedTab, setSelectedTab] = useState<'all' | 'favorites'>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<{
+    ticking: boolean;
+    breathing: boolean;
+    nature: boolean;
+  }>({ ticking: false, breathing: false, nature: false });
+
+  // Initialize sound service when component mounts if master sound is enabled
+  React.useEffect(() => {
+    if (state.sounds.master) {
+      console.log('🎵 [Sounds] Initializing sound service on mount');
+      soundService.initialize().catch(err => 
+        console.error('🎵 [Sounds] Failed to initialize sound service:', err)
+      );
+    }
+  }, []);
 
   // Get selected sound for each category to show as "Active Sound Layers"
   const activeSoundLayers = [
@@ -188,6 +203,14 @@ export default function SoundsScreen() {
 
   const handleToggleFavoriteSound = (soundId: string) => {
     dispatch({ type: 'TOGGLE_FAVORITE_SOUND', payload: soundId });
+    soundService.playHaptic('light');
+  };
+
+  const handleToggleCategory = (category: 'ticking' | 'breathing' | 'nature') => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
     soundService.playHaptic('light');
   };
 
@@ -337,194 +360,113 @@ export default function SoundsScreen() {
             <Text style={styles.testButtonText}>Test Haptics</Text>
           </TouchableOpacity>
 
-          {/* Active Sounds Section */}
+          {/* Sound Layers Section with Toggles */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Active Sound Layers</Text>
+            <Text style={styles.sectionTitle}>Sound Layers</Text>
             <Text style={styles.sectionDescription}>
-              Sounds that will play during your session
+              Tap to expand and select sounds for your session
             </Text>
             
             {activeSoundLayers.map((layer, index) => {
               const selectedSoundDef = SOUND_LIBRARY.find(s => s.id === layer.selectedSound);
+              const isExpanded = expandedCategories[layer.category];
+              const categorySounds = SOUND_LIBRARY.filter(s => s.category === layer.category);
+              console.log(`[Sound Layers] ${layer.category}: ${categorySounds.length} sounds, expanded: ${isExpanded}`);
+              
               return (
-                <TouchableOpacity 
-                  key={layer.category}
-                  style={[styles.soundCard, layer.enabled && styles.soundCardActive]}
-                  onPress={() => handleSoundToggle(layer.category)}
-                >
-                  <View style={[styles.soundImage, { backgroundColor: getCategoryColor(layer.category, index) }]}>
-                    <Text style={styles.soundEmoji}>{getCategoryEmoji(layer.category)}</Text>
-                  </View>
-                  <View style={styles.soundInfo}>
-                    <Text style={styles.soundTitle}>{layer.title}</Text>
-                    <Text style={styles.soundDescription}>
-                      {selectedSoundDef ? selectedSoundDef.title : 'No sound selected'}
-                    </Text>
-                    <Text style={styles.soundDuration}>Continuous</Text>
-                  </View>
-                  <View style={[styles.checkbox, layer.enabled && styles.checkboxActive]}>
-                    {layer.enabled && (
-                      <IconSymbol name="checkmark" size={16} color="#FFFFFF" />
-                    )}
-                  </View>
-                </TouchableOpacity>
+                <View key={layer.category} style={styles.categoryContainer}>
+                  {/* Category Header Toggle */}
+                  <TouchableOpacity 
+                    style={[styles.categoryHeader, layer.enabled && styles.categoryHeaderActive]}
+                    onPress={() => handleToggleCategory(layer.category)}
+                  >
+                    <View style={[styles.soundImage, { backgroundColor: getCategoryColor(layer.category, index) }]}>
+                      <Text style={styles.soundEmoji}>{getCategoryEmoji(layer.category)}</Text>
+                    </View>
+                    <View style={styles.soundInfo}>
+                      <Text style={styles.soundTitle} numberOfLines={1}>{layer.title}</Text>
+                      <Text style={styles.soundDescription} numberOfLines={1}>
+                        {selectedSoundDef ? selectedSoundDef.title : 'Tap to select'}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.checkbox, layer.enabled && styles.checkboxActive]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleSoundToggle(layer.category);
+                      }}
+                    >
+                      {layer.enabled && (
+                        <IconSymbol name="checkmark" size={16} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                    <IconSymbol 
+                      name={isExpanded ? "chevron.up" : "chevron.down"} 
+                      size={20} 
+                      color={newUIColors.textSecondary}
+                      style={{ marginLeft: 8 }}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Expanded Sound Catalog */}
+                  {isExpanded && (
+                    <View style={styles.soundCatalog}>
+                      {categorySounds.map((sound, soundIndex) => (
+                        <TouchableOpacity 
+                          key={sound.id}
+                          style={[
+                            styles.catalogSoundCard,
+                            state.sounds[layer.category].selectedSound === sound.id && styles.catalogSoundCardActive
+                          ]}
+                          onPress={() => handleSelectSound(layer.category, sound.id)}
+                        >
+                          <View style={[styles.catalogSoundImage, { backgroundColor: getCategoryColor(layer.category, soundIndex) }]}>
+                            <Text style={styles.catalogSoundEmoji}>{getSoundEmoji(sound.title, layer.category)}</Text>
+                          </View>
+                          <View style={styles.catalogSoundInfo}>
+                            <Text style={styles.catalogSoundTitle} numberOfLines={2}>{sound.title}</Text>
+                            <Text style={styles.catalogSoundDescription} numberOfLines={2}>{sound.description}</Text>
+                          </View>
+                          <View style={styles.soundActions}>
+                            <TouchableOpacity 
+                              style={[
+                                styles.playButton,
+                                playingId === sound.id && styles.playButtonActive
+                              ]}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handlePlayPreview(sound.id);
+                              }}
+                            >
+                              <IconSymbol 
+                                name={playingId === sound.id ? "pause.fill" : "play.fill"} 
+                                size={16} 
+                                color="#FFFFFF" 
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.heartButton}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavoriteSound(sound.id);
+                              }}
+                            >
+                              <IconSymbol
+                                name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
+                                size={16}
+                                color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
               );
             })}
           </View>
 
-          {/* All Sound Categories */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Breathing Sounds</Text>
-            <Text style={styles.sectionDescription}>
-              Calm breathing patterns
-            </Text>
-            
-            {breathingSounds.map((sound, index) => (
-              <TouchableOpacity 
-                key={sound.id}
-                style={[
-                  styles.soundCard,
-                  state.sounds.breathing.selectedSound === sound.id && styles.soundCardActive
-                ]}
-                onPress={() => handleSelectSound('breathing', sound.id)}
-              >
-                <View style={[styles.soundImage, { backgroundColor: getCategoryColor('breathing', index) }]}>
-                  <Text style={styles.soundEmoji}>{getSoundEmoji(sound.title, 'breathing')}</Text>
-                </View>
-                <View style={styles.soundInfo}>
-                  <Text style={styles.soundTitle}>{sound.title}</Text>
-                  <Text style={styles.soundDescription}>{sound.description}</Text>
-                </View>
-                <View style={styles.soundActions}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.playButton,
-                      playingId === sound.id && styles.playButtonActive
-                    ]}
-                    onPress={() => handlePlayPreview(sound.id)}
-                  >
-                    <IconSymbol 
-                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                      size={20} 
-                      color="#FFFFFF" 
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={() => handleToggleFavoriteSound(sound.id)}
-                  >
-                    <IconSymbol
-                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
-                      size={20}
-                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ticking Sounds</Text>
-            <Text style={styles.sectionDescription}>
-              Steady rhythmic ticking
-            </Text>
-            
-            {tickingSounds.map((sound, index) => (
-              <TouchableOpacity 
-                key={sound.id}
-                style={[
-                  styles.soundCard,
-                  state.sounds.ticking.selectedSound === sound.id && styles.soundCardActive
-                ]}
-                onPress={() => handleSelectSound('ticking', sound.id)}
-              >
-                <View style={[styles.soundImage, { backgroundColor: getCategoryColor('ticking', index) }]}>
-                  <Text style={styles.soundEmoji}>{getSoundEmoji(sound.title, 'ticking')}</Text>
-                </View>
-                <View style={styles.soundInfo}>
-                  <Text style={styles.soundTitle}>{sound.title}</Text>
-                  <Text style={styles.soundDescription}>{sound.description}</Text>
-                </View>
-                <View style={styles.soundActions}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.playButton,
-                      playingId === sound.id && styles.playButtonActive
-                    ]}
-                    onPress={() => handlePlayPreview(sound.id)}
-                  >
-                    <IconSymbol 
-                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                      size={20} 
-                      color="#FFFFFF" 
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={() => handleToggleFavoriteSound(sound.id)}
-                  >
-                    <IconSymbol
-                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
-                      size={20}
-                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Nature Sounds</Text>
-            <Text style={styles.sectionDescription}>
-              Peaceful ambient nature
-            </Text>
-            
-            {natureSounds.map((sound, index) => (
-              <TouchableOpacity 
-                key={sound.id}
-                style={[
-                  styles.soundCard,
-                  state.sounds.nature.selectedSound === sound.id && styles.soundCardActive
-                ]}
-                onPress={() => handleSelectSound('nature', sound.id)}
-              >
-                <View style={[styles.soundImage, { backgroundColor: getCategoryColor('nature', index) }]}>
-                  <Text style={styles.soundEmoji}>{getSoundEmoji(sound.title, 'nature')}</Text>
-                </View>
-                <View style={styles.soundInfo}>
-                  <Text style={styles.soundTitle}>{sound.title}</Text>
-                  <Text style={styles.soundDescription}>{sound.description}</Text>
-                </View>
-                <View style={styles.soundActions}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.playButton,
-                      playingId === sound.id && styles.playButtonActive
-                    ]}
-                    onPress={() => handlePlayPreview(sound.id)}
-                  >
-                    <IconSymbol 
-                      name={playingId === sound.id ? "pause.fill" : "play.fill"} 
-                      size={20} 
-                      color="#FFFFFF" 
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={() => handleToggleFavoriteSound(sound.id)}
-                  >
-                    <IconSymbol
-                      name={isFavoriteSound(sound.id) ? "heart.fill" : "heart"}
-                      size={20}
-                      color={isFavoriteSound(sound.id) ? "#FF6B6B" : newUIColors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           {/* Presets Section */}
           <View style={styles.section}>
@@ -798,6 +740,7 @@ const styles = StyleSheet.create({
   },
   soundInfo: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
   },
   soundTitle: {
     fontSize: 17,
@@ -809,6 +752,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: newUIColors.textSecondary,
     marginBottom: 4,
+    lineHeight: 20,
   },
   soundDuration: {
     fontSize: 12,
@@ -827,8 +771,10 @@ const styles = StyleSheet.create({
   },
   soundActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
+    flexShrink: 0,
+    marginTop: 2,
   },
   heartButton: {
     width: 40,
@@ -852,6 +798,78 @@ const styles = StyleSheet.create({
   checkboxActive: {
     backgroundColor: newUIColors.primary,
     borderColor: newUIColors.primary,
+  },
+  categoryContainer: {
+    marginBottom: 12,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  categoryHeaderActive: {
+    borderColor: newUIColors.primary + '40',
+    backgroundColor: newUIColors.primary + '08',
+  },
+  soundCatalog: {
+    marginTop: 8,
+    paddingLeft: 16,
+    gap: 8,
+  },
+  catalogSoundCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: newUIColors.card,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '20',
+  },
+  catalogSoundCardActive: {
+    borderColor: newUIColors.primary,
+    backgroundColor: newUIColors.primary + '10',
+  },
+  catalogSoundImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  catalogSoundEmoji: {
+    fontSize: 24,
+  },
+  catalogSoundInfo: {
+    flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
+  },
+  catalogSoundTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: newUIColors.text,
+    marginBottom: 2,
+  },
+  catalogSoundDescription: {
+    fontSize: 13,
+    color: newUIColors.textSecondary,
+    lineHeight: 18,
   },
   addButton: {
     flexDirection: 'row',

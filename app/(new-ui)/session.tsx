@@ -10,12 +10,8 @@ import {
   Alert,
   StatusBar,
   Modal,
-<<<<<<< HEAD
   TextInput,
   Animated
-=======
-  TextInput
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -40,10 +36,6 @@ export default function NewSessionScreen() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showEndFlow, setShowEndFlow] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-<<<<<<< HEAD
-=======
-  const [aiAdvice, setAiAdvice] = useState<string>('Take a short stretch and hydrate before your next focus block.');
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   const [endNote, setEndNote] = useState<string>('');
   const [lastSessionDuration, setLastSessionDuration] = useState(0); // seconds
   const [lastSoundsUsed, setLastSoundsUsed] = useState<string[]>([]);
@@ -56,7 +48,6 @@ export default function NewSessionScreen() {
   });
   const [isPaused, setIsPaused] = useState(false);
   const [showSessionSettings, setShowSessionSettings] = useState(false);
-<<<<<<< HEAD
   const [followUpNote, setFollowUpNote] = useState<string>('');
   const [isSavingFollowUp, setIsSavingFollowUp] = useState(false);
   const [isFollowUpSaved, setIsFollowUpSaved] = useState(false);
@@ -66,8 +57,6 @@ export default function NewSessionScreen() {
   // Animation for loading spinners
   const spinValue = useRef(new Animated.Value(0)).current;
   const spinValue2 = useRef(new Animated.Value(0)).current;
-=======
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
 
   const favoriteSounds = state.favoriteSoundIds
     .map((id) => SOUND_LIBRARY.find((s) => s.id === id))
@@ -88,7 +77,6 @@ export default function NewSessionScreen() {
     }
   }, []);
 
-<<<<<<< HEAD
   // Spinning animation for follow-up loading indicator
   useEffect(() => {
     if (isSavingFollowUp) {
@@ -241,80 +229,6 @@ export default function NewSessionScreen() {
     if (mins > 0) {
       return `${mins}m ${secs}s`;
     }
-=======
-  const handleTimeSlotChange = (duration: 15 | 30 | 50 | 60) => {
-    dispatch({
-      type: 'UPDATE_SESSION',
-      payload: { timeSlotDuration: duration },
-    });
-    clockService.setTimeSlotDuration(duration);
-    soundService.playHaptic('light');
-  };
-
-  const handleSlotEveryChange = (minutes: number) => {
-    dispatch({
-      type: 'UPDATE_SESSION',
-      payload: { slotEveryMinutes: minutes },
-    });
-    clockService.setSlotEveryMinutes(minutes);
-    soundService.playHaptic('light');
-  };
-
-  const handleSpeedChange = (speed: number) => {
-    dispatch({
-      type: 'UPDATE_SESSION',
-      payload: { speedSetting: speed },
-    });
-    clockService.setSpeedMultiplier(speed);
-    soundService.playHaptic('light');
-  };
-
-  const handleDurationChange = (minutes: number) => {
-    dispatch({
-      type: 'UPDATE_SESSION',
-      payload: { targetDuration: minutes },
-    });
-    soundService.playHaptic('light');
-  };
-
-  const handleSelectFavoriteSound = (soundId: string) => {
-    const soundDef = SOUND_LIBRARY.find((s) => s.id === soundId);
-    if (!soundDef) return;
-
-    dispatch({
-      type: 'UPDATE_SOUNDS',
-      payload: {
-        [soundDef.category]: {
-          ...state.sounds[soundDef.category],
-          selectedSound: soundDef.id,
-          enabled: true,
-        },
-      },
-    });
-    soundService.playHaptic('light');
-  };
-
-  const handleSelectSound = (category: 'ticking' | 'breathing' | 'nature', soundId: string) => {
-    dispatch({
-      type: 'UPDATE_SOUNDS',
-      payload: {
-        [category]: {
-          ...state.sounds[category],
-          selectedSound: soundId,
-          enabled: true,
-        },
-      },
-    });
-    soundService.playHaptic('light');
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    if (mins > 0) {
-      return `${mins}m ${secs}s`;
-    }
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
     return `${secs}s`;
   };
 
@@ -392,15 +306,6 @@ export default function NewSessionScreen() {
         payload: { duration: durationSeconds },
       });
 
-<<<<<<< HEAD
-=======
-      const durationMinutes = Math.floor(durationSeconds / 60);
-      setAiAdvice(
-        durationMinutes > 20
-          ? 'Nice work! Try a 2-minute breathing exercise before the next session.'
-          : 'Great quick win. Consider enabling Nature + Breathing layers together next time.'
-      );
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
       setShowEndFlow(true);
     } else {
       // Start session
@@ -432,17 +337,32 @@ export default function NewSessionScreen() {
       
       clockService.start();
       
-      // Start sound layers if enabled
+      // Initialize and start sound layers if enabled
+      console.log('🎵 [Session] Starting session - Master sound:', state.sounds.master);
+      console.log('🎵 [Session] Sound layers:', {
+        ticking: { enabled: state.sounds.ticking.enabled, sound: state.sounds.ticking.selectedSound },
+        breathing: { enabled: state.sounds.breathing.enabled, sound: state.sounds.breathing.selectedSound },
+        nature: { enabled: state.sounds.nature.enabled, sound: state.sounds.nature.selectedSound }
+      });
+      
       if (state.sounds.master) {
+        // Initialize sound service if not already initialized
+        await soundService.initialize();
+        
         if (state.sounds.ticking.enabled) {
-          soundService.playSound(state.sounds.ticking.selectedSound, true);
+          console.log('🎵 [Session] Playing ticking sound:', state.sounds.ticking.selectedSound);
+          await soundService.playSound(state.sounds.ticking.selectedSound, true);
         }
         if (state.sounds.breathing.enabled) {
-          soundService.playSound(state.sounds.breathing.selectedSound, true);
+          console.log('🎵 [Session] Playing breathing sound:', state.sounds.breathing.selectedSound);
+          await soundService.playSound(state.sounds.breathing.selectedSound, true);
         }
         if (state.sounds.nature.enabled) {
-          soundService.playSound(state.sounds.nature.selectedSound, true);
+          console.log('🎵 [Session] Playing nature sound:', state.sounds.nature.selectedSound);
+          await soundService.playSound(state.sounds.nature.selectedSound, true);
         }
+      } else {
+        console.log('🎵 [Session] Master sound is OFF - no sounds will play');
       }
     }
     soundService.playHaptic('medium');
@@ -615,7 +535,7 @@ export default function NewSessionScreen() {
               <View style={styles.aiCard}>
                 <Text style={styles.aiCardTitle}>Guided Focus</Text>
                 <Text style={styles.aiCardText}>
-                  Hi {state.user?.name || 'there'}, I’ll keep you on track. I can remind you about breaks, water, and wrap-ups.
+                  Hi {state.user?.name || 'there'}, I'll keep you on track. I can remind you about breaks, water, and wrap-ups.
                 </Text>
                 <View style={styles.aiPillsRow}>
                   {['Motivation', 'Empathy', 'Confidence'].map((tag) => (
@@ -734,8 +654,8 @@ export default function NewSessionScreen() {
                             ]}
                           >
                             <View style={styles.soundRowInfo}>
-                              <Text style={styles.soundRowTitle}>{sound.title}</Text>
-                              <Text style={styles.soundRowDesc}>{sound.description}</Text>
+                              <Text style={styles.soundRowTitle} numberOfLines={2}>{sound.title}</Text>
+                              <Text style={styles.soundRowDesc} numberOfLines={2}>{sound.description}</Text>
                             </View>
                             <View style={styles.soundRowActions}>
                               <TouchableOpacity
@@ -786,13 +706,13 @@ export default function NewSessionScreen() {
                                     <View 
                                       style={[
                                         styles.volumeBar,
-                                        { width: `${state.sounds[category].volume * 100}%`, backgroundColor: newUIColors.primary }
+                                        { width: `${Math.min(state.sounds[category].volume * 100, 100)}%`, backgroundColor: newUIColors.primary }
                                       ]} 
                                     />
                                   </View>
                                   <TouchableOpacity
                                     style={styles.volumeButton}
-                                    onPress={() => handleVolumeChange(category, Math.min(1, state.sounds[category].volume + 0.1))}
+                                    onPress={() => handleVolumeChange(category, Math.min(1.2, state.sounds[category].volume + 0.1))}
                                   >
                                     <IconSymbol name="plus" size={16} color={newUIColors.text} />
                                   </TouchableOpacity>
@@ -1227,7 +1147,13 @@ export default function NewSessionScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.endPrompt}>How did that feel?</Text>
+            <ScrollView 
+              style={styles.endModalScroll}
+              contentContainerStyle={styles.endModalScrollContent}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.endPrompt}>How did that feel?</Text>
             <View style={styles.emojiRow}>
               {['😕','😐','🙂','😌','😄','🤩'].map((emoji) => (
                 <TouchableOpacity
@@ -1244,7 +1170,6 @@ export default function NewSessionScreen() {
             </View>
 
             <Text style={styles.endPrompt}>Quick note (optional)</Text>
-<<<<<<< HEAD
             <View style={styles.quickNoteContainer}>
               <TextInput
                 value={endNote}
@@ -1348,21 +1273,6 @@ export default function NewSessionScreen() {
                 <Text style={styles.journeyButtonText}>View Your Journey</Text>
                 <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
               </TouchableOpacity>
-=======
-            <TextInput
-              value={endNote}
-              onChangeText={setEndNote}
-              placeholder="E.g. Needed more nature sounds, felt productive..."
-              placeholderTextColor={newUIColors.textSecondary}
-              multiline
-              numberOfLines={3}
-              style={styles.endInput}
-            />
-
-            <View style={styles.adviceCard}>
-              <IconSymbol name="sparkles" size={18} color={newUIColors.primary} />
-              <Text style={styles.adviceText}>{aiAdvice}</Text>
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
             </View>
 
             <View style={styles.endSummary}>
@@ -1400,6 +1310,7 @@ export default function NewSessionScreen() {
               <IconSymbol name="heart.text.square" size={18} color={newUIColors.text} />
               <Text style={styles.secondaryButtonText}>Save configuration as preset</Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1704,7 +1615,7 @@ const styles = StyleSheet.create({
   },
   soundRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 12,
     borderRadius: 12,
     backgroundColor: newUIColors.background,
@@ -1718,6 +1629,7 @@ const styles = StyleSheet.create({
   },
   soundRowInfo: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
   },
   soundRowTitle: {
     fontSize: 15,
@@ -1728,11 +1640,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: newUIColors.textSecondary,
     marginTop: 2,
+    lineHeight: 18,
   },
   soundRowActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
+    flexShrink: 0,
+    marginTop: 2,
   },
   iconButton: {
     width: 36,
@@ -1846,6 +1761,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  linkButton: {
+    paddingVertical: 8,
+  },
+  linkButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: newUIColors.primary,
   },
   // Running View
   runningContainer: {
@@ -1966,14 +1889,26 @@ const styles = StyleSheet.create({
     backgroundColor: newUIColors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    maxHeight: '90%',
+    width: '100%',
+    flexShrink: 1,
+  },
+  endModalScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    paddingHorizontal: 20,
+  },
+  endModalScrollContent: {
+    paddingTop: 12,
     paddingBottom: 28,
   },
   endModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 20,
     marginBottom: 12,
+    paddingHorizontal: 20,
   },
   endModalTitle: {
     fontSize: 18,
@@ -2018,7 +1953,6 @@ const styles = StyleSheet.create({
     color: newUIColors.text,
     minHeight: 80,
     textAlignVertical: 'top',
-<<<<<<< HEAD
     marginBottom: 8,
   },
   quickNoteContainer: {
@@ -2119,25 +2053,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: newUIColors.textSecondary,
     fontWeight: '600',
-=======
-    marginBottom: 12,
-  },
-  adviceCard: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: newUIColors.primary + '12',
-    borderWidth: 1,
-    borderColor: newUIColors.primary + '25',
-    marginBottom: 12,
-  },
-  adviceText: {
-    flex: 1,
-    color: newUIColors.text,
-    fontSize: 14,
-    lineHeight: 20,
->>>>>>> 6db2f6090c35c465eaa0b8f0a7ce982da76a9eb0
   },
   endSummary: {
     marginBottom: 12,
@@ -2215,6 +2130,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
 
 

@@ -1,7 +1,11 @@
-{
-can you have the "X" Wrong pop up message appear only in the middle of the page, right now it looks like it is scrambled across the page.
+# Feature Requests
 
-}
+1. **Sound Layers UI Redesign**
+   - Rename "Active Sound Layers" to "Sound Layers"
+   - Replace scrolling selection with toggle buttons per category
+   - Toggle opens category catalog (Ticking/Breathing/Nature)
+   - Maintain existing functionality for sound on/off during sessions
+   - Multi-path navigation support (A to B from multiple entry points)
 
 ---
 

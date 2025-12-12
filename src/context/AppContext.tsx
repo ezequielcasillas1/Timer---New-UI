@@ -45,17 +45,17 @@ export interface Sounds {
   ticking: {
     enabled: boolean;
     selectedSound: string;
-    volume: number; // 0.0 to 1.0
+    volume: number; // 0.0 to 1.2 (120% max for +20% headroom)
   };
   breathing: {
     enabled: boolean;
     selectedSound: string;
-    volume: number; // 0.0 to 1.0
+    volume: number; // 0.0 to 1.2 (120% max for +20% headroom)
   };
   nature: {
     enabled: boolean;
     selectedSound: string;
-    volume: number; // 0.0 to 1.0
+    volume: number; // 0.0 to 1.2 (120% max for +20% headroom)
   };
 }
 

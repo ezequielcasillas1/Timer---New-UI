@@ -314,11 +314,11 @@ export default function JourneyScreen() {
                         <View style={[styles.historyIcon, { backgroundColor: newUIColors.primary + '20' }]}>
                           <IconSymbol name="timer" size={20} color={newUIColors.primary} />
                         </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.historyTitle}>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.historyTitle} numberOfLines={1}>
                             {session.mode === 'speed' ? 'Speed Session' : 'Locked Session'}
                           </Text>
-                          <Text style={styles.historyDate}>
+                          <Text style={styles.historyDate} numberOfLines={1}>
                             {new Date(session.startTime).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -371,7 +371,7 @@ export default function JourneyScreen() {
                 <View style={styles.insightDetailCard}>
                   <View style={styles.insightDetailHeader}>
                     <IconSymbol name="brain.head.profile" size={24} color="#8B5CF6" />
-                    <Text style={styles.insightDetailTitle}>Best Focus Time</Text>
+                    <Text style={styles.insightDetailTitle} numberOfLines={1}>Best Focus Time</Text>
                   </View>
                   <Text style={styles.insightDetailText}>
                     Your peak productivity occurs between <Text style={styles.highlight}>9 AM - 11 AM</Text>.
@@ -382,7 +382,7 @@ export default function JourneyScreen() {
                 <View style={styles.insightDetailCard}>
                   <View style={styles.insightDetailHeader}>
                     <IconSymbol name="speaker.wave.3.fill" size={24} color="#10B981" />
-                    <Text style={styles.insightDetailTitle}>Optimal Sound Mix</Text>
+                    <Text style={styles.insightDetailTitle} numberOfLines={1}>Optimal Sound Mix</Text>
                   </View>
                   <Text style={styles.insightDetailText}>
                     <Text style={styles.highlight}>Nature + Breathing</Text> combination shows the best results
@@ -393,7 +393,7 @@ export default function JourneyScreen() {
                 <View style={styles.insightDetailCard}>
                   <View style={styles.insightDetailHeader}>
                     <IconSymbol name="target" size={24} color="#F59E0B" />
-                    <Text style={styles.insightDetailTitle}>Session Duration</Text>
+                    <Text style={styles.insightDetailTitle} numberOfLines={1}>Session Duration</Text>
                   </View>
                   <Text style={styles.insightDetailText}>
                     Your sweet spot is <Text style={styles.highlight}>45 minutes</Text>. Sessions longer than
@@ -404,7 +404,7 @@ export default function JourneyScreen() {
                 <View style={styles.insightDetailCard}>
                   <View style={styles.insightDetailHeader}>
                     <IconSymbol name="calendar.badge.checkmark" size={24} color="#EC4899" />
-                    <Text style={styles.insightDetailTitle}>Consistency Pattern</Text>
+                    <Text style={styles.insightDetailTitle} numberOfLines={1}>Consistency Pattern</Text>
                   </View>
                   <Text style={styles.insightDetailText}>
                     You perform best with <Text style={styles.highlight}>daily morning sessions</Text>.
@@ -463,12 +463,12 @@ export default function JourneyScreen() {
                         <View style={[styles.lovedIcon, { backgroundColor: newUIColors.primary + '20' }]}>
                           <IconSymbol name="heart.fill" size={20} color={newUIColors.primary} />
                         </View>
-                        <Text style={styles.lovedTitle}>{preset.name}</Text>
+                        <Text style={styles.lovedTitle} numberOfLines={1}>{preset.name}</Text>
                         <View style={styles.lovedBadge}>
                           <Text style={styles.lovedBadgeText}>#{idx + 1}</Text>
                         </View>
                       </View>
-                      <Text style={styles.lovedDescription}>
+                      <Text style={styles.lovedDescription} numberOfLines={1}>
                         Used in {Math.floor(Math.random() * 20) + 5} sessions
                       </Text>
                       <View style={styles.lovedStats}>
@@ -584,9 +584,11 @@ const styles = StyleSheet.create({
   },
   chatTooltipText: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
     fontSize: 13,
     color: newUIColors.text,
     fontStyle: 'italic',
+    lineHeight: 18,
   },
   chatContainer: {
     marginHorizontal: 20,
@@ -618,6 +620,7 @@ const styles = StyleSheet.create({
   },
   chatHeaderText: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
     fontSize: 15,
     fontWeight: '600',
     color: newUIColors.text,
@@ -908,6 +911,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   insightDetailTitle: {
+    flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
     fontSize: 17,
     fontWeight: '700',
     color: newUIColors.text,
@@ -957,6 +962,7 @@ const styles = StyleSheet.create({
   },
   lovedTitle: {
     flex: 1,
+    minWidth: 0, // Allow flex child to shrink below content size
     fontSize: 16,
     fontWeight: '600',
     color: newUIColors.text,
