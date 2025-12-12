@@ -1,6 +1,6 @@
 # Bug Fixes Needed
 
-{}
+{ - Unmatched route after skipping membership; redirects to missing /(tabs)/(home)/ }
 
 ---
 

@@ -450,6 +450,10 @@ export class SoundService {
       return;
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'playSound entry',data:{soundId,category:soundDef.category,loop,volume,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized,alreadyPlaying:this.currentlyPlaying.has(soundId)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
     // Stop if already playing
     if (this.currentlyPlaying.has(soundId)) {
       console.log(`SoundService: ${soundDef.title} already playing, stopping first...`);
@@ -491,6 +495,10 @@ export class SoundService {
   private async startCrossfadeLoop(soundId: string, soundDef: SoundDefinition, volume: number = 1.0) {
     console.log(`[CROSSFADE] Starting crossfade loop for ${soundDef.title} at ${Math.round(volume * 100)}% volume`);
     
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:startCrossfadeLoop',message:'Crossfade loop start',data:{soundId,category:soundDef.category,volume},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
     // Initialize crossfade loop tracking
     this.crossfadeLoops[soundId] = {
       instances: [],
@@ -523,6 +531,9 @@ export class SoundService {
           { shouldPlay: false, isLooping: false }
         );
         sound = result.sound;
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Created sound instance (local)',data:{soundId,category:soundDef.category,isFirst},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       } else if (soundDef.freesoundId) {
         // Stream from Freesound CDN
         const soundData = await freesoundAPI.getSound(soundDef.freesoundId);
@@ -534,6 +545,9 @@ export class SoundService {
           { shouldPlay: false, isLooping: false }
         );
         sound = result.sound;
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Created sound instance (streamed)',data:{soundId,category:soundDef.category,isFirst},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       } else {
         throw new Error('Sound definition has no localFile or freesoundId');
       }
@@ -541,10 +555,13 @@ export class SoundService {
       // Get duration (may need to wait for streaming sounds)
       let duration: number | null = null;
       let attempts = 0;
-      const maxAttempts = soundDef.freesoundId ? 10 : 1; // More attempts for streaming
+      const maxAttempts = soundDef.freesoundId ? 10 : 5; // Allow retries even for local sounds
       
       while (!duration && attempts < maxAttempts) {
         const status = await sound.getStatusAsync();
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:duration-check',message:'Duration poll',data:{soundId,category:soundDef.category,attempt:attempts+1,isLoaded:status.isLoaded,isPlaying:(status as any).isPlaying,durationMillis:(status as any).durationMillis},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (status.isLoaded && status.durationMillis) {
           duration = status.durationMillis;
           break;
@@ -556,14 +573,19 @@ export class SoundService {
       }
       
       if (!duration) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Duration missing after polls',data:{soundId,category:soundDef.category,attempts},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         throw new Error('Could not get sound duration');
       }
-      
       // Nature sounds: simple 3s overlap, no fading (ambient sounds) - longer overlap hides loop point better
       // Other sounds: 2s crossfade with fade in/out (breathing, ticking)
       const isNature = soundDef.category === 'nature';
       const overlapDuration = isNature ? 3000 : 2000; // 3s for nature, 2s for breathing/ticking
       const nextInstanceDelay = Math.max(0, duration - overlapDuration);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Crossfade instance ready',data:{soundId,category:soundDef.category,duration,overlap:overlapDuration,isFirst},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       
       console.log(`[CROSSFADE] ${soundDef.category.toUpperCase()} sound - Duration: ${(duration/1000).toFixed(1)}s, overlap: ${overlapDuration}ms, next at: ${(nextInstanceDelay/1000).toFixed(1)}s`);
       
@@ -655,6 +677,9 @@ export class SoundService {
       
     } catch (error) {
       console.log(`[CROSSFADE] ❌ Error playing instance for ${soundId}:`, error);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Error playing instance',data:{soundId,category:soundDef?.category,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
   }
 

@@ -57,7 +57,7 @@ export default function FavoritesScreen() {
             <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Favorites</Text>
+          <Text style={styles.headerTitle}>Journey</Text>
 
           <View style={styles.placeholderIcon} />
         </View>
@@ -159,13 +159,13 @@ export default function FavoritesScreen() {
             style={styles.navItem}
             onPress={() => router.push('/(new-ui)/home')}
           >
-            <IconSymbol name="house" size={24} color={newUIColors.textSecondary} />
+            <IconSymbol name="house.fill" size={24} color={newUIColors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.navItem}
             onPress={() => router.push('/(new-ui)/session')}
           >
-            <IconSymbol name="pause" size={24} color={newUIColors.textSecondary} />
+            <IconSymbol name="pause.fill" size={24} color={newUIColors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <IconSymbol name="heart.fill" size={24} color={newUIColors.primary} />

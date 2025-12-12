@@ -25,10 +25,17 @@ import { supabase } from '@/app/integrations/supabase/client';
 //   statusCodes,
 // } from '@react-native-google-signin/google-signin';
 
+const babyTheme = {
+  background: '#E6F3FF',
+  card: 'rgba(255,255,255,0.92)',
+  border: '#D2E8FF',
+  accent: colors.primary,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: babyTheme.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -39,6 +46,9 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 20,
     marginBottom: 20,
+    backgroundColor: babyTheme.card,
+    borderWidth: 1,
+    borderColor: babyTheme.border,
   },
   title: {
     fontSize: 32,
@@ -63,22 +73,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: colors.text,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: babyTheme.border,
   },
   inputFocused: {
-    borderColor: colors.primary,
+    borderColor: babyTheme.accent,
   },
   inputError: {
     borderColor: '#FF6B6B',
   },
   signInButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: babyTheme.accent,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -111,7 +121,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: babyTheme.border,
   },
   dividerText: {
     marginHorizontal: 16,
@@ -157,7 +167,7 @@ const styles = StyleSheet.create({
     top: 60,
     left: 20,
     zIndex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -165,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   configNotice: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -344,7 +354,7 @@ export default function SignInScreen() {
         
         // Small delay to ensure auth context updates
         setTimeout(() => {
-          router.replace('/(tabs)/(home)/');
+          router.replace('/(auth)/membership');
         }, 100);
       } else {
         console.warn('SignIn: Unexpected response - no session returned:', data);
@@ -424,8 +434,8 @@ export default function SignInScreen() {
     try {
       console.log('SignIn: Signing in as guest...');
       await signInAsGuest();
-      // Navigate to main app
-      router.replace('/(tabs)/(home)/');
+      // Navigate to membership selection after guest entry
+      router.replace('/(auth)/membership');
     } catch (error: any) {
       console.error('SignIn: Guest sign in error:', error);
       Alert.alert('Error', 'Failed to sign in as guest. Please try again.');

@@ -423,7 +423,7 @@ export default function NewUIHome() {
             onPress={() => router.push('/(new-ui)/favorites')}
           >
             <IconSymbol name="heart.fill" size={24} color={newUIColors.textSecondary} />
-            <Text style={styles.navLabel}>Favorites</Text>
+            <Text style={styles.navLabel}>Journey</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

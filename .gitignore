@@ -38,7 +38,6 @@ netlify.toml
 .netlify/
 
 pnpm-lock.yaml
-package-lock.json
 
 # Audio files
-assets/sounds/
+# (allow sounds to be tracked for builds)

@@ -17,6 +17,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { BlurView } from 'expo-blur';
 import { supabase } from '@/app/integrations/supabase/client';
+import PromoCodeModal from '@/components/PromoCodeModal';
 // Google Sign-in temporarily disabled for Expo Go compatibility
 // Uncomment when building with EAS or using expo-dev-client:
 // import {
@@ -25,10 +26,17 @@ import { supabase } from '@/app/integrations/supabase/client';
 //   statusCodes,
 // } from '@react-native-google-signin/google-signin';
 
+const babyTheme = {
+  background: '#E6F3FF',
+  card: 'rgba(255,255,255,0.92)',
+  border: '#D2E8FF',
+  accent: colors.primary,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: babyTheme.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -39,6 +47,9 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 20,
     marginBottom: 20,
+    backgroundColor: babyTheme.card,
+    borderWidth: 1,
+    borderColor: babyTheme.border,
   },
   title: {
     fontSize: 32,
@@ -63,22 +74,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: colors.text,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: babyTheme.border,
   },
   inputFocused: {
-    borderColor: colors.primary,
+    borderColor: babyTheme.accent,
   },
   inputError: {
     borderColor: '#FF6B6B',
   },
   signUpButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: babyTheme.accent,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -102,7 +113,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: babyTheme.border,
   },
   dividerText: {
     marginHorizontal: 16,
@@ -148,7 +159,7 @@ const styles = StyleSheet.create({
     top: 60,
     left: 20,
     zIndex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -166,7 +177,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   configNotice: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: babyTheme.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -210,6 +221,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  promoCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    gap: 8,
+  },
+  promoCodeButtonText: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
 
 export default function SignUpScreen() {
@@ -227,6 +255,7 @@ export default function SignUpScreen() {
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [showPromoModal, setShowPromoModal] = useState(false);
 
   // Configure Google Sign-In (disabled for Expo Go)
   React.useEffect(() => {
@@ -359,7 +388,7 @@ export default function SignUpScreen() {
             [
               {
                 text: 'Continue',
-                onPress: () => router.replace('/(tabs)/(home)/'),
+                onPress: () => router.replace('/(auth)/membership'),
               },
             ]
           );
@@ -597,18 +626,28 @@ export default function SignUpScreen() {
             </View>
 
             {!signUpSuccess && (
-              <TouchableOpacity
-                style={[
-                  styles.signUpButton,
-                  loading && styles.signUpButtonDisabled
-                ]}
-                onPress={handleSignUp}
-                disabled={loading}
-              >
-                <Text style={styles.signUpButtonText}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  style={styles.promoCodeButton}
+                  onPress={() => setShowPromoModal(true)}
+                >
+                  <IconSymbol name="gift" size={18} color={colors.primary} />
+                  <Text style={styles.promoCodeButtonText}>Have a promotional code?</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.signUpButton,
+                    loading && styles.signUpButtonDisabled
+                  ]}
+                  onPress={handleSignUp}
+                  disabled={loading}
+                >
+                  <Text style={styles.signUpButtonText}>
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </Text>
+                </TouchableOpacity>
+              </>
             )}
 
             {!signUpSuccess && (
@@ -646,6 +685,17 @@ export default function SignUpScreen() {
           </BlurView>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <PromoCodeModal
+        visible={showPromoModal}
+        onClose={() => setShowPromoModal(false)}
+        onSuccess={(accessDays) => {
+          Alert.alert(
+            'Access Granted!',
+            `You've been granted ${accessDays} days of free access. Your account will have premium features enabled.`
+          );
+        }}
+      />
     </View>
   );
 }

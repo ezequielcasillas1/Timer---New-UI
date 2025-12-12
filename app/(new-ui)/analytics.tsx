@@ -22,8 +22,10 @@ const newUIColors = {
 };
 
 const { width } = Dimensions.get('window');
-const CIRCLE_SIZE = width * 0.6;
-const STROKE_WIDTH = 12;
+const HORIZONTAL_PADDING = 40; // 20px padding on each side from scrollContent
+const MAX_CIRCLE_SIZE = 240; // Maximum circle size in pixels
+const CIRCLE_SIZE = Math.min(width * 0.4, width - HORIZONTAL_PADDING - 20, MAX_CIRCLE_SIZE);
+const STROKE_WIDTH = 10;
 const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -84,7 +86,7 @@ export default function AnalyticsScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, width: '100%' }}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity 
@@ -104,11 +106,12 @@ export default function AnalyticsScreen() {
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
         >
           {/* Circular Progress */}
           <View style={styles.progressSection}>
-            <View style={styles.circleContainer}>
-              <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
+              <View style={styles.circleContainer}>
+              <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} viewBox={`0 0 ${CIRCLE_SIZE} ${CIRCLE_SIZE}`}>
                 <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
                   {/* Background Circle */}
                   <Circle
@@ -145,12 +148,12 @@ export default function AnalyticsScreen() {
             <View style={styles.statsGrid}>
               <View style={styles.statRow}>
                 <View style={styles.statItem}>
-                  <IconSymbol name="checkmark.circle.fill" size={16} color={newUIColors.primary} />
+                  <IconSymbol name="checkmark.circle.fill" size={20} color={newUIColors.primary} />
                   <Text style={styles.statValue}>Meditation days</Text>
                   <Text style={styles.statLabel}>{Math.round(progress)}%</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <IconSymbol name="xmark.circle.fill" size={16} color="#FF6B6B" />
+                  <IconSymbol name="xmark.circle.fill" size={20} color="#FF6B6B" />
                   <Text style={styles.statValue}>Missed days</Text>
                   <Text style={styles.statLabel}>{100 - Math.round(progress)}%</Text>
                 </View>
@@ -209,13 +212,13 @@ export default function AnalyticsScreen() {
         {/* Bottom Navigation */}
         <View style={styles.bottomNav}>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/home')}>
-            <IconSymbol name="house" size={24} color={newUIColors.textSecondary} />
+            <IconSymbol name="house.fill" size={24} color={newUIColors.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <IconSymbol name="chart.bar.fill" size={24} color={newUIColors.primary} />
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/session')}>
+            <IconSymbol name="pause.fill" size={24} color={newUIColors.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <IconSymbol name="heart" size={24} color={newUIColors.textSecondary} />
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/favorites')}>
+            <IconSymbol name="heart.fill" size={24} color={newUIColors.textSecondary} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -227,6 +230,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: newUIColors.background,
+    width: '100%',
   },
   header: {
     flexDirection: 'row',
@@ -245,18 +249,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: newUIColors.text,
   },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+    width: '100%',
+    alignItems: 'stretch',
   },
   progressSection: {
     alignItems: 'center',
     marginBottom: 32,
-    paddingVertical: 20,
+    paddingVertical: 10,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   circleContainer: {
     position: 'relative',
     marginBottom: 24,
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
   },
   centerContent: {
     position: 'absolute',
@@ -268,10 +285,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressPercentage: {
-    fontSize: 56,
+    fontSize: 40,
     fontWeight: '700',
     color: newUIColors.text,
     marginBottom: 4,
+    textAlign: 'center',
   },
   progressLabel: {
     fontSize: 16,
@@ -280,15 +298,18 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     width: '100%',
+    paddingHorizontal: 0,
   },
   statRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
     gap: 16,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
     gap: 4,
+    minWidth: 0,
   },
   statValue: {
     fontSize: 14,
@@ -317,15 +338,17 @@ const styles = StyleSheet.create({
   statsCardsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
     marginBottom: 24,
+    width: '100%',
   },
   statCard: {
-    width: (width - 52) / 2,
+    width: '48%',
     backgroundColor: newUIColors.card,
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
+    marginBottom: 12,
     ...Platform.select({
       ios: {
         shadowColor: '#000',

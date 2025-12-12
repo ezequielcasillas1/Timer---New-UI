@@ -344,6 +344,9 @@ export default function NewSessionScreen() {
         breathing: { enabled: state.sounds.breathing.enabled, sound: state.sounds.breathing.selectedSound },
         nature: { enabled: state.sounds.nature.enabled, sound: state.sounds.nature.selectedSound }
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1',location:'session.tsx:breathing-state',message:'Session start sound state',data:{master:state.sounds.master,ticking:{enabled:state.sounds.ticking.enabled,sound:state.sounds.ticking.selectedSound},breathing:{enabled:state.sounds.breathing.enabled,sound:state.sounds.breathing.selectedSound},nature:{enabled:state.sounds.nature.enabled,sound:state.sounds.nature.selectedSound}},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       
       if (state.sounds.master) {
         // Initialize sound service if not already initialized
@@ -355,6 +358,9 @@ export default function NewSessionScreen() {
         }
         if (state.sounds.breathing.enabled) {
           console.log('🎵 [Session] Playing breathing sound:', state.sounds.breathing.selectedSound);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2',location:'session.tsx:before-breathing-play',message:'Calling playSound for breathing',data:{soundId:state.sounds.breathing.selectedSound},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           await soundService.playSound(state.sounds.breathing.selectedSound, true);
         }
         if (state.sounds.nature.enabled) {
@@ -876,45 +882,6 @@ export default function NewSessionScreen() {
                 </View>
               </View>
 
-              {/* Sound Layers */}
-              <View style={styles.configCard}>
-                <Text style={styles.configCardTitle}>Sound Layers</Text>
-                <Text style={styles.configCardDescription}>
-                  Select which sound layers to activate during the session
-                </Text>
-                <View style={styles.soundLayersContainer}>
-                  {(['ticking', 'breathing', 'nature'] as const).map((soundType) => (
-                    <TouchableOpacity
-                      key={soundType}
-                      style={[
-                        styles.soundLayerButton,
-                        state.sounds[soundType].enabled && styles.soundLayerButtonActive,
-                      ]}
-                      onPress={() => handleSoundToggle(soundType)}
-                    >
-                      <View
-                        style={[
-                          styles.checkbox,
-                          state.sounds[soundType].enabled && styles.checkboxActive,
-                        ]}
-                      >
-                        {state.sounds[soundType].enabled && (
-                          <IconSymbol name="checkmark" size={16} color="#FFFFFF" />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.soundLayerText,
-                          state.sounds[soundType].enabled && styles.soundLayerTextActive,
-                        ]}
-                      >
-                        {soundType.charAt(0).toUpperCase() + soundType.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
               {/* Favorites Row */}
               {favoriteSounds.length > 0 && (
                 <View style={styles.configCard}>
@@ -1110,7 +1077,7 @@ export default function NewSessionScreen() {
         {!isRunning && (
           <View style={styles.bottomNav}>
             <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/home')}>
-              <IconSymbol name="house" size={24} color={newUIColors.textSecondary} />
+              <IconSymbol name="house.fill" size={24} color={newUIColors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.navItem}>
               <IconSymbol name="pause.fill" size={24} color={newUIColors.primary} />

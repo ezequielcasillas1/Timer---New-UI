@@ -74,7 +74,7 @@ export default function EmailConfirmedScreen() {
   useEffect(() => {
     // Auto-redirect after 3 seconds
     const timer = setTimeout(() => {
-      router.replace('/(tabs)/(home)/');
+      router.replace('/(new-ui)/home');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -104,7 +104,7 @@ export default function EmailConfirmedScreen() {
 
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={() => router.replace('/(tabs)/(home)/')}
+            onPress={() => router.replace('/(new-ui)/home')}
           >
             <Text style={styles.continueButtonText}>Continue to App</Text>
           </TouchableOpacity>
