@@ -102,13 +102,6 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     category: 'breathing'
   },
   {
-    id: 'breathing-woman-calm',
-    title: 'Woman Calm Breathing',
-    description: 'Calm woman breathing naturally and relaxed',
-    localFile: require('../../assets/sounds/breathing/woman-calm-breathing.wav'),
-    category: 'breathing'
-  },
-  {
     id: 'breathing-underwater',
     title: 'Underwater Breathing',
     description: 'Breathing with underwater atmosphere and bubble effects',
@@ -121,7 +114,8 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     id: 'ticking-classic-clock',
     title: 'Classic Clock Tick',
     description: 'Traditional clock ticking sound for time awareness',
-    localFile: require('../../assets/sounds/ticking/classic-clock-tick.wav'),
+    // Stream from Freesound to ensure fresh, uncorrupted source (HQ MP3 preview)
+    freesoundId: '490323',
     category: 'ticking'
   },
   {
@@ -237,6 +231,31 @@ export class SoundService {
   private appStateSubscription: { remove: () => void } | null = null;
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private activeSoundIds: Set<string> = new Set(); // Track which sounds should be playing
+  private debugStatusCounts: Record<string, number> = {};
+  private debugLastPos: Record<string, number> = {};
+
+  private attachDebugStatus(soundId: string, soundDef: SoundDefinition, sound: Audio.Sound) {
+    // Log only a few status updates per sound + any errors / suspicious jumps
+    sound.setOnPlaybackStatusUpdate((status) => {
+      const s: any = status as any;
+      const count = (this.debugStatusCounts[soundId] ?? 0) + 1;
+      this.debugStatusCounts[soundId] = count;
+
+      const pos = typeof s.positionMillis === 'number' ? s.positionMillis : -1;
+      const last = typeof this.debugLastPos[soundId] === 'number' ? this.debugLastPos[soundId] : pos;
+      this.debugLastPos[soundId] = pos;
+
+      const hasError = !!s.error;
+      const posWentBack = pos >= 0 && last >= 0 && pos + 200 < last; // big jump backwards
+      const shouldLog = count <= 6 || hasError || posWentBack;
+
+      if (!shouldLog) return;
+
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H1',location:'SoundService.ts:attachDebugStatus',message:'PlaybackStatusUpdate',data:{soundId,category:soundDef.category,isLoaded:!!s.isLoaded,isPlaying:!!s.isPlaying,isBuffering:!!s.isBuffering,positionMillis:s.positionMillis,durationMillis:s.durationMillis,volume:s.volume,rate:s.rate,didJustFinish:!!s.didJustFinish,shouldCorrectPitch:!!s.shouldCorrectPitch,error:s.error?String(s.error):undefined,posWentBack,count,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    });
+  }
 
   async initialize() {
     console.log('SoundService: Initializing');
@@ -382,6 +401,9 @@ export class SoundService {
   };
 
   async loadSound(soundId: string): Promise<Audio.Sound | null> {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'loadSound entry',data:{soundId,alreadyCached:!!this.sounds[soundId]},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (this.sounds[soundId]) {
       return this.sounds[soundId];
     }
@@ -389,6 +411,9 @@ export class SoundService {
     const soundDef = SOUND_LIBRARY.find(s => s.id === soundId);
     if (!soundDef) {
       console.log(`SoundService: Sound definition not found for ${soundId}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Sound definition not found in loadSound',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return null;
     }
 
@@ -429,29 +454,44 @@ export class SoundService {
       
       this.sounds[soundId] = sound;
       console.log(`🔊 [WEB DEBUG] Sound cached successfully: ${soundId}`);
+      this.attachDebugStatus(soundId, soundDef, sound);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Sound loaded successfully',data:{soundId,title:soundDef.title,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return sound;
     } catch (error) {
       console.error(`❌ [SoundService] Error loading ${soundId}:`, error);
       console.error(`❌ [WEB DEBUG] Platform: ${Platform.OS}, Error details:`, error);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Error loading sound',data:{soundId,error:String(error),errorStack:error instanceof Error?error.stack:undefined,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return null;
     }
   }
 
   async playSound(soundId: string, loop: boolean = true, volume: number = 1.0) {
     console.log(`🔊 [SoundService] playSound called: ${soundId}, loop: ${loop}, volume: ${volume}, masterEnabled: ${this.masterEnabled}, initialized: ${this.isInitialized}`);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'playSound entry',data:{soundId,loop,volume,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!this.masterEnabled || !this.isInitialized) {
       console.log('SoundService: Sound disabled or not initialized');
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'Early return - not initialized or disabled',data:{soundId,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return;
     }
 
     const soundDef = SOUND_LIBRARY.find(s => s.id === soundId);
     if (!soundDef) {
       console.log(`SoundService: Sound definition not found for ${soundId}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Sound definition not found',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return;
     }
-
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'playSound entry',data:{soundId,category:soundDef.category,loop,volume,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized,alreadyPlaying:this.currentlyPlaying.has(soundId)},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Sound definition found',data:{soundId,title:soundDef.title,hasLocalFile:!!soundDef.localFile,hasFreesoundId:!!soundDef.freesoundId},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
 
     // Stop if already playing
@@ -464,10 +504,54 @@ export class SoundService {
     
     try {
       if (loop) {
-        // Mark as active sound that should keep playing
-        this.activeSoundIds.add(soundId);
-        // Use crossfade looping for seamless transitions
-        await this.startCrossfadeLoop(soundId, soundDef, volume);
+        // New path: rely on processed perfect-loop assets, no crossfade layering
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop path - before loadSound',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        const sound = await this.loadSound(soundId);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop path - after loadSound',data:{soundId,soundLoaded:!!sound},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (sound) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop path enter',data:{soundId,category:soundDef.category,requestedVolume:volume,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          await sound.setIsLoopingAsync(true);
+          await sound.setVolumeAsync(0);
+          const preStatus = await sound.getStatusAsync();
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop volume primed to 0',data:{soundId,platform:Platform.OS,volume:(preStatus as any).volume,position:(preStatus as any).positionMillis,isPlaying:(preStatus as any).isPlaying},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          await sound.playAsync();
+          // Re-assert volume 0 immediately after play starts
+          await sound.setVolumeAsync(0);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'After playAsync (pre-seek)',data:{soundId,status:(await sound.getStatusAsync() as any)},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          // Skip first 50ms of file to dodge leading transients
+          await sound.setPositionAsync(50);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'After setPositionAsync(50)',data:{soundId,status:(await sound.getStatusAsync() as any)},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          const postPlayStatus = await sound.getStatusAsync();
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Post-play volume reasserted to 0',data:{soundId,platform:Platform.OS,volume:(postPlayStatus as any).volume,position:(postPlayStatus as any).positionMillis,isPlaying:(postPlayStatus as any).isPlaying},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          // Small pre-fade guard to let playback settle before ramping volume
+          await new Promise(resolve => setTimeout(resolve, 50));
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Post-play pre-fade delay complete',data:{soundId,delayMs:50},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          this.currentlyPlaying.add(soundId);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop fade-in start',data:{soundId,fadeMs:2000,targetVolume:volume,platform:Platform.OS,category:soundDef.category},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          this.fadeIn(sound, 2000, volume);
+        } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop path - sound failed to load',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+        }
       } else {
         // Single playback with fade-out
         const sound = await this.loadSound(soundId);
@@ -489,16 +573,15 @@ export class SoundService {
       }
     } catch (error) {
       console.log(`SoundService: ❌ Error playing ${soundDef.title}:`, error);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H5',location:'SoundService.ts:playSound',message:'Error in playSound',data:{soundId,error:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
   }
 
   private async startCrossfadeLoop(soundId: string, soundDef: SoundDefinition, volume: number = 1.0) {
     console.log(`[CROSSFADE] Starting crossfade loop for ${soundDef.title} at ${Math.round(volume * 100)}% volume`);
     
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:startCrossfadeLoop',message:'Crossfade loop start',data:{soundId,category:soundDef.category,volume},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-
     // Initialize crossfade loop tracking
     this.crossfadeLoops[soundId] = {
       instances: [],
@@ -531,9 +614,6 @@ export class SoundService {
           { shouldPlay: false, isLooping: false }
         );
         sound = result.sound;
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Created sound instance (local)',data:{soundId,category:soundDef.category,isFirst},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       } else if (soundDef.freesoundId) {
         // Stream from Freesound CDN
         const soundData = await freesoundAPI.getSound(soundDef.freesoundId);
@@ -545,9 +625,6 @@ export class SoundService {
           { shouldPlay: false, isLooping: false }
         );
         sound = result.sound;
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Created sound instance (streamed)',data:{soundId,category:soundDef.category,isFirst},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       } else {
         throw new Error('Sound definition has no localFile or freesoundId');
       }
@@ -559,9 +636,6 @@ export class SoundService {
       
       while (!duration && attempts < maxAttempts) {
         const status = await sound.getStatusAsync();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:duration-check',message:'Duration poll',data:{soundId,category:soundDef.category,attempt:attempts+1,isLoaded:status.isLoaded,isPlaying:(status as any).isPlaying,durationMillis:(status as any).durationMillis},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (status.isLoaded && status.durationMillis) {
           duration = status.durationMillis;
           break;
@@ -573,9 +647,6 @@ export class SoundService {
       }
       
       if (!duration) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Duration missing after polls',data:{soundId,category:soundDef.category,attempts},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         throw new Error('Could not get sound duration');
       }
       // Nature sounds: simple 3s overlap, no fading (ambient sounds) - longer overlap hides loop point better
@@ -583,10 +654,6 @@ export class SoundService {
       const isNature = soundDef.category === 'nature';
       const overlapDuration = isNature ? 3000 : 2000; // 3s for nature, 2s for breathing/ticking
       const nextInstanceDelay = Math.max(0, duration - overlapDuration);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Crossfade instance ready',data:{soundId,category:soundDef.category,duration,overlap:overlapDuration,isFirst},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-      
       console.log(`[CROSSFADE] ${soundDef.category.toUpperCase()} sound - Duration: ${(duration/1000).toFixed(1)}s, overlap: ${overlapDuration}ms, next at: ${(nextInstanceDelay/1000).toFixed(1)}s`);
       
       // Add to instances
@@ -677,30 +744,41 @@ export class SoundService {
       
     } catch (error) {
       console.log(`[CROSSFADE] ❌ Error playing instance for ${soundId}:`, error);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3',location:'SoundService.ts:playNextCrossfadeInstance',message:'Error playing instance',data:{soundId,category:soundDef?.category,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     }
   }
 
-  private fadeIn(sound: Audio.Sound, duration: number) {
+  private fadeIn(sound: Audio.Sound, duration: number, targetVolume: number = 1) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn invoked',data:{duration,targetVolume},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const steps = 20; // Number of volume steps
     const stepDuration = duration / steps;
-    const volumeIncrement = 1 / steps;
+    const volumeIncrement = targetVolume / steps;
     
     let currentStep = 0;
     const fadeInterval = setInterval(async () => {
       currentStep++;
-      const newVolume = Math.min(currentStep * volumeIncrement, 1);
+      const newVolume = Math.min(currentStep * volumeIncrement, targetVolume);
       
       try {
         await sound.setVolumeAsync(newVolume);
+        // #region agent log
+        if (currentStep % 5 === 0 || currentStep === 1) { // Log every 5th step and first step
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn volume step',data:{currentStep,newVolume,targetVolume,steps},timestamp:Date.now()})}).catch(()=>{});
+        }
+        // #endregion
       } catch (error) {
         clearInterval(fadeInterval);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn error',data:{duration,targetVolume,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       }
       
       if (currentStep >= steps) {
         clearInterval(fadeInterval);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn complete',data:{duration,targetVolume,finalVolume:newVolume},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       }
     }, stepDuration);
   }
@@ -764,6 +842,9 @@ export class SoundService {
     const soundName = soundDef ? soundDef.title : soundId;
     
     console.log(`SoundService: 🛑 Stopping ${soundName}...`);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H4',location:'SoundService.ts:stopSound:start',message:'stopSound called',data:{soundId,hasInstance:!!this.sounds[soundId],currentlyPlaying:Array.from(this.currentlyPlaying)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     
     // Remove from active sounds (don't restore this)
     this.activeSoundIds.delete(soundId);
@@ -813,7 +894,7 @@ export class SoundService {
         
         // Fade out and stop if playing
         if (status.isLoaded && status.isPlaying) {
-          await this.fadeOut(sound, 1000);
+        await this.fadeOut(sound, 1000);
           await sound.stopAsync();
           console.log(`SoundService: ✅ Stopped playback with fade out`);
         }
@@ -854,11 +935,17 @@ export class SoundService {
           await sound.setVolumeAsync(newVolume);
         } catch (error) {
           clearInterval(fadeInterval);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadeout-1s',hypothesisId:'H5',location:'SoundService.ts:fadeOut',message:'FadeOut error',data:{duration,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           resolve();
         }
         
         if (currentStep >= steps) {
           clearInterval(fadeInterval);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadeout-1s',hypothesisId:'H5',location:'SoundService.ts:fadeOut',message:'FadeOut complete',data:{duration},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           resolve();
         }
       }, stepDuration);
@@ -867,6 +954,9 @@ export class SoundService {
 
   async forceStopAll() {
     console.log('SoundService: Force stopping all sounds');
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H3',location:'SoundService.ts:forceStopAll:start',message:'forceStopAll start',data:{currentlyPlaying:Array.from(this.currentlyPlaying),crossfadeLoops:Object.keys(this.crossfadeLoops),cachedSounds:Object.keys(this.sounds)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     
     // Clear all active sound tracking
     this.activeSoundIds.clear();
@@ -891,7 +981,7 @@ export class SoundService {
       
       for (const sound of this.crossfadeLoops[soundId].instances) {
         try {
-          await sound.setVolumeAsync(0);
+          await this.fadeOut(sound, 1000);
           await sound.stopAsync();
           await sound.unloadAsync();
         } catch (error) {
@@ -936,6 +1026,9 @@ export class SoundService {
     
     this.currentlyPlaying.clear();
     console.log('SoundService: All sounds stopped and unloaded');
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H3',location:'SoundService.ts:forceStopAll:end',message:'forceStopAll complete',data:{remainingCached:Object.keys(this.sounds),remainingCrossfade:Object.keys(this.crossfadeLoops)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }
 
   async setMasterEnabled(enabled: boolean) {
@@ -994,6 +1087,84 @@ export class SoundService {
   // Get all currently playing sounds
   getCurrentlyPlaying(): string[] {
     return Array.from(this.currentlyPlaying);
+  }
+
+  // Update volume of a currently playing sound
+  async updateVolume(soundId: string, volume: number): Promise<void> {
+    console.log(`🔊 [SoundService] updateVolume called for ${soundId}, volume: ${Math.round(volume * 100)}%`);
+    console.log(`🔊 [SoundService] currentlyPlaying:`, Array.from(this.currentlyPlaying));
+    console.log(`🔊 [SoundService] cached sounds:`, Object.keys(this.sounds));
+    
+    if (!this.currentlyPlaying.has(soundId)) {
+      console.log(`🔊 [SoundService] Sound ${soundId} not in currentlyPlaying set`);
+      return;
+    }
+
+    try {
+      // Check if sound is in crossfade loop (has multiple instances)
+      if (this.crossfadeLoops[soundId] && this.crossfadeLoops[soundId].active) {
+        console.log(`🔊 [SoundService] Updating crossfade loop for ${soundId}, instances: ${this.crossfadeLoops[soundId].instances.length}`);
+        // Update all active instances in the crossfade loop
+        for (const sound of this.crossfadeLoops[soundId].instances) {
+          try {
+            const status = await sound.getStatusAsync();
+            if (status.isLoaded && status.isPlaying) {
+              await sound.setVolumeAsync(volume);
+              console.log(`🔊 [SoundService] ✅ Updated crossfade instance volume to ${Math.round(volume * 100)}%`);
+            }
+          } catch (error) {
+            console.error(`🔊 [SoundService] Error updating crossfade instance:`, error);
+          }
+        }
+        return;
+      }
+
+      // Regular playback - update the cached sound
+      if (!this.sounds[soundId]) {
+        console.log(`🔊 [SoundService] Sound ${soundId} not found in cache`);
+        return;
+      }
+
+      const sound = this.sounds[soundId];
+      const status = await sound.getStatusAsync();
+      if (!status.isLoaded) {
+        console.log(`🔊 [SoundService] Sound ${soundId} is not loaded`);
+        return;
+      }
+      
+      // Update volume even if not marked as playing (might be in fade-in state)
+      await sound.setVolumeAsync(volume);
+      console.log(`🔊 [SoundService] ✅ Updated volume for ${soundId} to ${Math.round(volume * 100)}% (isPlaying: ${status.isPlaying})`);
+    } catch (error) {
+      console.error(`🔊 [SoundService] ❌ Error updating volume for ${soundId}:`, error);
+    }
+  }
+
+  // Update volume for the currently playing sound in a category
+  async updateCategoryVolume(category: 'ticking' | 'breathing' | 'nature', volume: number, selectedSoundId?: string): Promise<void> {
+    console.log(`🔊 [SoundService] updateCategoryVolume called for ${category}, volume: ${Math.round(volume * 100)}%, selectedSoundId: ${selectedSoundId}`);
+    
+    // If we know which sound is selected, try to update that one first
+    if (selectedSoundId) {
+      if (this.currentlyPlaying.has(selectedSoundId)) {
+        await this.updateVolume(selectedSoundId, volume);
+        return;
+      } else {
+        console.log(`🔊 [SoundService] Selected sound ${selectedSoundId} is not currently playing`);
+      }
+    }
+    
+    // Otherwise, find any playing sound in this category
+    const categorySounds = SOUND_LIBRARY.filter(s => s.category === category);
+    for (const soundDef of categorySounds) {
+      if (this.currentlyPlaying.has(soundDef.id)) {
+        console.log(`🔊 [SoundService] Found playing sound ${soundDef.id} in category ${category}`);
+        await this.updateVolume(soundDef.id, volume);
+        return; // Only update the first one found
+      }
+    }
+    
+    console.log(`🔊 [SoundService] ⚠️ No playing sound found for category ${category}`);
   }
 
   // Clean up the app state listener and keep-alive when service is destroyed

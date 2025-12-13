@@ -3,3 +3,7 @@
 **Commit:** pending
 **Files:** app/(auth)/membership.tsx, app/(auth)/email-confirmed.tsx, instructions/refresh.md
 **Result:** Redirects now target /(new-ui)/home so users avoid the missing /(tabs)/ route.
+
+
+
+

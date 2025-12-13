@@ -13,6 +13,7 @@ import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useAppContext } from '@/src/context/AppContext';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 import { theme } from '@/constants/Theme';
 
@@ -33,6 +34,9 @@ export default function AnalyticsScreen() {
   const router = useRouter();
   const { state } = useAppContext();
   const [progress, setProgress] = useState(0);
+
+  // Refresh sound state on page load
+  useSoundStateRefresh();
   
   // Calculate real progress from state
   const totalSessions = state.progress.totalSessions || 0;
@@ -89,12 +93,7 @@ export default function AnalyticsScreen() {
       <SafeAreaView style={{ flex: 1, width: '100%' }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
           
           <Text style={styles.headerTitle}>Analytics</Text>
           
@@ -239,10 +238,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,

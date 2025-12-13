@@ -18,6 +18,7 @@ import { testSoundService } from '@/src/services/TestSoundService';
 import SoundPresetCard from '@/components/SoundPresetCard';
 import SavePresetModal from '@/components/SavePresetModal';
 import { SoundPreset } from '@/src/context/AppContext';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 import { theme } from '@/constants/Theme';
 
@@ -67,11 +68,17 @@ export default function SoundsScreen() {
   const [selectedTab, setSelectedTab] = useState<'all' | 'favorites'>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
+  const [editingPreset, setEditingPreset] = useState<SoundPreset | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<{
     ticking: boolean;
     breathing: boolean;
     nature: boolean;
   }>({ ticking: false, breathing: false, nature: false });
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
+
+  // Refresh sound state on page load
+  useSoundStateRefresh();
 
   // Initialize sound service when component mounts if master sound is enabled
   React.useEffect(() => {
@@ -82,6 +89,11 @@ export default function SoundsScreen() {
       );
     }
   }, []);
+
+  // Reset pagination when favorites change or tab changes
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedTab, state.favoriteSoundIds.length, state.soundPresets.filter(p => p.isFavorite).length]);
 
   // Get selected sound for each category to show as "Active Sound Layers"
   const activeSoundLayers = [
@@ -137,18 +149,27 @@ export default function SoundsScreen() {
   };
 
   const handlePlayPreview = async (soundId: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'sounds.tsx:handlePlayPreview',message:'Preview clicked',data:{soundId,playingId,isCurrentlyPlaying:playingId===soundId,masterEnabled:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (playingId === soundId) {
       await soundService.forceStopAll();
       setPlayingId(null);
     } else {
       await soundService.forceStopAll();
       setPlayingId(soundId);
-      await soundService.playSound(soundId, false);
-      // Stop preview after 5 seconds
-      setTimeout(async () => {
-        await soundService.forceStopAll();
-        setPlayingId(null);
-      }, 5000);
+      // Ensure sound service is initialized before preview
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'Initializing service for preview',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      await soundService.initialize();
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'Before playSound call',data:{soundId,willLoop:true},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      await soundService.playSound(soundId, true);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'After playSound call',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
   };
 
@@ -182,18 +203,43 @@ export default function SoundsScreen() {
     await testSoundService.testHaptics();
   };
 
-  const handleSavePreset = (name: string) => {
-    const newPreset: SoundPreset = {
-      id: Date.now().toString(),
-      name,
-      ticking: { ...state.sounds.ticking },
-      breathing: { ...state.sounds.breathing },
-      nature: { ...state.sounds.nature },
-      isFavorite: false,
-      createdAt: new Date(),
-    };
-    dispatch({ type: 'ADD_SOUND_PRESET', payload: newPreset });
-    soundService.playHaptic('light');
+  const handleSavePreset = (name: string, sounds: {
+    ticking: { enabled: boolean; selectedSound: string; volume: number };
+    breathing: { enabled: boolean; selectedSound: string; volume: number };
+    nature: { enabled: boolean; selectedSound: string; volume: number };
+  }, presetId?: string) => {
+    if (presetId) {
+      // Update existing preset
+      dispatch({ 
+        type: 'UPDATE_SOUND_PRESET', 
+        payload: { 
+          id: presetId, 
+          updates: { name, ticking: sounds.ticking, breathing: sounds.breathing, nature: sounds.nature } 
+        } 
+      });
+      soundService.playHaptic('light');
+      Alert.alert('Success', `Preset "${name}" updated successfully!`);
+    } else {
+      // Create new preset
+      const newPreset: SoundPreset = {
+        id: Date.now().toString(),
+        name,
+        ticking: sounds.ticking,
+        breathing: sounds.breathing,
+        nature: sounds.nature,
+        isFavorite: false,
+        createdAt: new Date(),
+      };
+      dispatch({ type: 'ADD_SOUND_PRESET', payload: newPreset });
+      soundService.playHaptic('light');
+      Alert.alert('Success', `Preset "${name}" saved successfully!`);
+    }
+    setEditingPreset(null);
+  };
+
+  const handleEditPreset = (preset: SoundPreset) => {
+    setEditingPreset(preset);
+    setShowSavePresetModal(true);
   };
 
   const handleTogglePresetFavorite = (presetId: string) => {
@@ -228,23 +274,70 @@ export default function SoundsScreen() {
     soundService.playHaptic('medium');
   };
 
-  const handleDuplicatePreset = (preset: SoundPreset) => {
-    const duplicatedPreset: SoundPreset = {
-      ...preset,
-      id: Date.now().toString(),
-      name: `${preset.name} (Copy)`,
-      isFavorite: false,
-      createdAt: new Date(),
+  const handleDeletePreset = (presetId: string) => {
+    const performDelete = () => {
+      dispatch({ type: 'DELETE_SOUND_PRESET', payload: presetId });
+      soundService.playHaptic('medium');
     };
-    dispatch({ type: 'ADD_SOUND_PRESET', payload: duplicatedPreset });
-    soundService.playHaptic('light');
-    Alert.alert('Success', 'Preset duplicated successfully');
+
+    if (Platform.OS === 'web') {
+      // Use browser confirm for web
+      const confirmed = window.confirm('Are you sure you want to delete this preset?');
+      if (confirmed) {
+        performDelete();
+      }
+    } else {
+      // Use Alert.alert for native
+      Alert.alert(
+        'Delete Preset',
+        'Are you sure you want to delete this preset?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: performDelete,
+          },
+        ]
+      );
+    }
   };
 
-  // Filter presets based on selected tab
-  const displayedPresets = selectedTab === 'favorites'
+  // Get favorite sounds
+  const favoriteSounds = SOUND_LIBRARY.filter(s => state.favoriteSoundIds.includes(s.id));
+  
+  // Filter presets based on selected tab and remove duplicates
+  const displayedPresets = (selectedTab === 'favorites'
     ? state.soundPresets.filter(p => p.isFavorite)
-    : state.soundPresets;
+    : state.soundPresets
+  ).filter(preset => !preset.name.includes('(Copy)'));
+
+  // Combine favorite sounds and presets for pagination
+  const allFavorites = selectedTab === 'favorites' 
+    ? [
+        ...favoriteSounds.map(sound => ({ type: 'sound' as const, item: sound })),
+        ...displayedPresets.map(preset => ({ type: 'preset' as const, item: preset }))
+      ]
+    : [];
+
+  // Pagination calculations
+  const totalItems = allFavorites.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const paginatedFavorites = allFavorites.slice(startIndex, endIndex);
+
+  // Filter sounds based on selected tab
+  const getFilteredSounds = (category: 'ticking' | 'breathing' | 'nature') => {
+    const categorySounds = SOUND_LIBRARY.filter(s => s.category === category);
+    if (selectedTab === 'favorites') {
+      return categorySounds.filter(s => state.favoriteSoundIds.includes(s.id));
+    }
+    return categorySounds;
+  };
 
   return (
     <View style={styles.container}>
@@ -253,12 +346,7 @@ export default function SoundsScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
           
           <Text style={styles.headerTitle}>Sound Library</Text>
           
@@ -271,7 +359,10 @@ export default function SoundsScreen() {
         <View style={styles.tabsContainer}>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'all' && styles.tabActive]}
-            onPress={() => setSelectedTab('all')}
+            onPress={() => {
+              setSelectedTab('all');
+              setCurrentPage(0);
+            }}
           >
             <Text style={[styles.tabText, selectedTab === 'all' && styles.tabTextActive]}>
               All Sounds
@@ -284,6 +375,7 @@ export default function SoundsScreen() {
                 router.push('/(new-ui)/favorites');
               } else {
                 setSelectedTab('favorites');
+                setCurrentPage(0);
               }
             }}
           >
@@ -297,10 +389,161 @@ export default function SoundsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Helping Text */}
-          <View style={styles.helpingTextContainer}>
-            <Text style={styles.helpingText}>Pick your sound types.</Text>
-          </View>
+          {selectedTab === 'favorites' ? (
+            <>
+              {/* Favorites View */}
+              <View style={styles.helpingTextContainer}>
+                <Text style={styles.helpingText}>Your Loved Sounds & Presets</Text>
+              </View>
+
+              {totalItems === 0 ? (
+                <View style={styles.emptyFavorites}>
+                  <IconSymbol name="heart" size={64} color={newUIColors.textSecondary + '60'} />
+                  <Text style={styles.emptyFavoritesText}>No favorites yet</Text>
+                  <Text style={styles.emptyFavoritesHint}>
+                    Tap the heart icon on sounds or presets to add them to favorites
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {/* Pagination Info */}
+                  <View style={styles.paginationInfo}>
+                    <Text style={styles.paginationText}>
+                      Showing {startIndex + 1}-{endIndex} of {totalItems}
+                    </Text>
+                  </View>
+
+                  {/* Favorite Items List */}
+                  <View style={styles.favoritesList}>
+                    {paginatedFavorites.map((fav, index) => {
+                      if (fav.type === 'sound') {
+                        const sound = fav.item;
+                        const categorySounds = SOUND_LIBRARY.filter(s => s.category === sound.category);
+                        const soundIndex = categorySounds.findIndex(s => s.id === sound.id);
+                        return (
+                          <TouchableOpacity
+                            key={`sound-${sound.id}`}
+                            style={styles.favoriteSoundCard}
+                            onPress={() => {
+                              const category = sound.category as 'ticking' | 'breathing' | 'nature';
+                              handleSelectSound(category, sound.id);
+                            }}
+                          >
+                            <View style={[styles.favoriteSoundImage, { backgroundColor: getCategoryColor(sound.category, soundIndex) }]}>
+                              <Text style={styles.favoriteSoundEmoji}>{getSoundEmoji(sound.title, sound.category)}</Text>
+                            </View>
+                            <View style={styles.favoriteSoundInfo}>
+                              <Text style={styles.favoriteSoundTitle} numberOfLines={2}>{sound.title}</Text>
+                              <Text style={styles.favoriteSoundDescription} numberOfLines={2}>{sound.description}</Text>
+                              <Text style={styles.favoriteSoundCategory}>{sound.category.charAt(0).toUpperCase() + sound.category.slice(1)}</Text>
+                            </View>
+                            <View style={styles.favoriteSoundActions}>
+                              <TouchableOpacity
+                                style={[styles.playButton, playingId === sound.id && styles.playButtonActive]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayPreview(sound.id);
+                                }}
+                              >
+                                <IconSymbol 
+                                  name={playingId === sound.id ? "pause.fill" : "play.fill"} 
+                                  size={16} 
+                                  color="#FFFFFF" 
+                                />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.heartButton}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleFavoriteSound(sound.id);
+                                }}
+                              >
+                                <IconSymbol
+                                  name="heart.fill"
+                                  size={16}
+                                  color="#FF6B6B"
+                                />
+                              </TouchableOpacity>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      } else {
+                        const preset = fav.item;
+                        return (
+                          <SoundPresetCard
+                            key={`preset-${preset.id}`}
+                            preset={preset}
+                            onPress={() => handleEditPreset(preset)}
+                            onFavoriteToggle={() => handleTogglePresetFavorite(preset.id)}
+                            onDelete={() => handleDeletePreset(preset.id)}
+                          />
+                        );
+                      }
+                    })}
+                  </View>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <View style={styles.paginationContainer}>
+                      <TouchableOpacity
+                        style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
+                        onPress={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                        disabled={currentPage === 0}
+                      >
+                        <IconSymbol name="chevron.left" size={20} color={currentPage === 0 ? newUIColors.textSecondary + '60' : newUIColors.text} />
+                      </TouchableOpacity>
+                      
+                      <View style={styles.paginationNumbers}>
+                        {Array.from({ length: Math.min(totalPages, 11) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 11) {
+                            pageNum = i;
+                          } else if (currentPage < 6) {
+                            pageNum = i;
+                          } else if (currentPage > totalPages - 6) {
+                            pageNum = totalPages - 11 + i;
+                          } else {
+                            pageNum = currentPage - 5 + i;
+                          }
+                          
+                          return (
+                            <TouchableOpacity
+                              key={pageNum}
+                              style={[
+                                styles.paginationNumber,
+                                currentPage === pageNum && styles.paginationNumberActive
+                              ]}
+                              onPress={() => setCurrentPage(pageNum)}
+                            >
+                              <Text style={[
+                                styles.paginationNumberText,
+                                currentPage === pageNum && styles.paginationNumberTextActive
+                              ]}>
+                                {pageNum}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
+                        onPress={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                      >
+                        <IconSymbol name="chevron.right" size={20} color={currentPage >= totalPages - 1 ? newUIColors.textSecondary + '60' : newUIColors.text} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Helping Text */}
+              <View style={styles.helpingTextContainer}>
+                <Text style={styles.helpingText}>Pick your sound types.</Text>
+              </View>
 
           {/* Master Sound Toggle */}
           <View style={styles.masterSoundContainer}>
@@ -370,7 +613,7 @@ export default function SoundsScreen() {
             {activeSoundLayers.map((layer, index) => {
               const selectedSoundDef = SOUND_LIBRARY.find(s => s.id === layer.selectedSound);
               const isExpanded = expandedCategories[layer.category];
-              const categorySounds = SOUND_LIBRARY.filter(s => s.category === layer.category);
+              const categorySounds = getFilteredSounds(layer.category);
               console.log(`[Sound Layers] ${layer.category}: ${categorySounds.length} sounds, expanded: ${isExpanded}`);
               
               return (
@@ -501,36 +744,34 @@ export default function SoundsScreen() {
             ) : (
               <View style={styles.presetsList}>
                 {displayedPresets.map((preset) => (
-                  <View key={preset.id} style={styles.presetCardWrapper}>
-                    <SoundPresetCard
-                      preset={preset}
-                      onPress={() => handleApplyPreset(preset)}
-                      onFavoriteToggle={() => handleTogglePresetFavorite(preset.id)}
-                    />
-                    <TouchableOpacity
-                      style={styles.duplicateButton}
-                      onPress={() => handleDuplicatePreset(preset)}
-                    >
-                      <IconSymbol name="doc.on.doc" size={16} color={newUIColors.textSecondary} />
-                      <Text style={styles.duplicateButtonText}>Duplicate</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <SoundPresetCard
+                    key={preset.id}
+                    preset={preset}
+                    onPress={() => handleEditPreset(preset)}
+                    onFavoriteToggle={() => handleTogglePresetFavorite(preset.id)}
+                    onDelete={() => handleDeletePreset(preset.id)}
+                  />
                 ))}
               </View>
             )}
           </View>
+            </>
+          )}
         </ScrollView>
 
         {/* Bottom Navigation */}
         <View style={styles.bottomNav}>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/home')}>
-            <IconSymbol name="house" size={24} color={newUIColors.textSecondary} />
+            <IconSymbol name="house.fill" size={24} color={newUIColors.textSecondary} />
+            <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(new-ui)/session')}>
-            <IconSymbol name="pause" size={24} color={newUIColors.textSecondary} />
+            <IconSymbol name="pause.fill" size={24} color={newUIColors.textSecondary} />
+            <Text style={styles.navLabel}>Session</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <IconSymbol name="speaker.wave.3.fill" size={24} color={newUIColors.primary} />
+            <IconSymbol name="heart.fill" size={24} color={newUIColors.primary} />
+            <Text style={[styles.navLabel, { color: newUIColors.primary }]}>Sounds</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -538,8 +779,25 @@ export default function SoundsScreen() {
       {/* Save Preset Modal */}
       <SavePresetModal
         visible={showSavePresetModal}
-        onClose={() => setShowSavePresetModal(false)}
+        onClose={() => {
+          setShowSavePresetModal(false);
+          setEditingPreset(null);
+        }}
         onSave={handleSavePreset}
+        initialSounds={editingPreset ? undefined : {
+          ticking: { ...state.sounds.ticking },
+          breathing: { ...state.sounds.breathing },
+          nature: { ...state.sounds.nature },
+        }}
+        editingPreset={editingPreset ? {
+          id: editingPreset.id,
+          name: editingPreset.name,
+          sounds: {
+            ticking: editingPreset.ticking,
+            breathing: editingPreset.breathing,
+            nature: editingPreset.nature,
+          }
+        } : undefined}
       />
     </View>
   );
@@ -557,10 +815,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,
@@ -899,28 +1156,6 @@ const styles = StyleSheet.create({
   presetsList: {
     gap: 12,
   },
-  presetCardWrapper: {
-    position: 'relative',
-  },
-  duplicateButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: newUIColors.background + 'E0',
-    borderWidth: 1,
-    borderColor: newUIColors.textSecondary + '30',
-  },
-  duplicateButtonText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: newUIColors.textSecondary,
-  },
   emptyPresets: {
     alignItems: 'center',
     paddingVertical: 48,
@@ -946,28 +1181,178 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     backgroundColor: newUIColors.card,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    justifyContent: 'space-around',
+    borderTopColor: 'rgba(126, 200, 227, 0.12)',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowColor: newUIColors.primary,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
   navItem: {
-    width: 40,
-    height: 40,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  navLabel: {
+    fontSize: 12,
+    color: newUIColors.textSecondary,
+    marginTop: 6,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  emptyFavorites: {
+    alignItems: 'center',
+    paddingVertical: 64,
+    paddingHorizontal: 20,
+  },
+  emptyFavoritesText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: newUIColors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyFavoritesHint: {
+    fontSize: 14,
+    color: newUIColors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  paginationInfo: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  paginationText: {
+    fontSize: 14,
+    color: newUIColors.textSecondary,
+    fontWeight: '500',
+  },
+  favoritesList: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  favoriteSoundCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: newUIColors.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '20',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  favoriteSoundImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    flexShrink: 0,
+  },
+  favoriteSoundEmoji: {
+    fontSize: 32,
+  },
+  favoriteSoundInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  favoriteSoundTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: newUIColors.text,
+    marginBottom: 4,
+  },
+  favoriteSoundDescription: {
+    fontSize: 14,
+    color: newUIColors.textSecondary,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  favoriteSoundCategory: {
+    fontSize: 12,
+    color: newUIColors.primary,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  favoriteSoundActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 8,
+  },
+  favoritePresetWrapper: {
+    position: 'relative',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+    gap: 8,
+  },
+  paginationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: newUIColors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '20',
+  },
+  paginationButtonDisabled: {
+    opacity: 0.4,
+  },
+  paginationNumbers: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  paginationNumber: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: newUIColors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: newUIColors.textSecondary + '20',
+  },
+  paginationNumberActive: {
+    backgroundColor: newUIColors.primary,
+    borderColor: newUIColors.primary,
+  },
+  paginationNumberText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: newUIColors.text,
+  },
+  paginationNumberTextActive: {
+    color: '#FFFFFF',
   },
 });
 

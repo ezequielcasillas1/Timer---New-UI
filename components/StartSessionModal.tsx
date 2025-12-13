@@ -70,7 +70,7 @@ export default function StartSessionModal({
 
   const timeSlotOptions = [15, 30, 50, 60];
   const slotEveryOptions = [15, 30, 45, 60];
-  const speedOptions = [0.8, 1, 1.2, 1.5];
+  const speedOptions = [0.8, 1, 1.2, 1.5, 2, 4, 8];
 
   const handleStart = () => {
     onStart({

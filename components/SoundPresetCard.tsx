@@ -19,6 +19,7 @@ interface SoundPresetCardProps {
   preset: SoundPreset;
   onPress?: () => void;
   onFavoriteToggle?: () => void;
+  onDelete?: () => void;
   colors?: {
     card?: string;
     text?: string;
@@ -93,6 +94,7 @@ export default function SoundPresetCard({
   preset,
   onPress,
   onFavoriteToggle,
+  onDelete,
   colors = {},
 }: SoundPresetCardProps) {
   const cardColor = colors.card || newUIColors.card;
@@ -106,12 +108,13 @@ export default function SoundPresetCard({
   ].filter(Boolean);
 
   return (
-    <TouchableOpacity
-      style={[styles.card, { backgroundColor: cardColor }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.cardContent}>
+    <View style={[styles.card, { backgroundColor: cardColor }]}>
+      <TouchableOpacity
+        style={styles.cardContent}
+        onPress={onPress}
+        activeOpacity={0.7}
+        disabled={!onPress}
+      >
         {/* 3-Tiered Curl System */}
         <View style={styles.curlWrapper}>
           <ThreeTieredCurl
@@ -131,23 +134,50 @@ export default function SoundPresetCard({
             {enabledSounds.length} sound{enabledSounds.length !== 1 ? 's' : ''} • {enabledSounds.join(', ')}
           </Text>
         </View>
+      </TouchableOpacity>
 
-        {/* Heart Icon for Favorites */}
-        <TouchableOpacity
-          style={styles.heartButton}
-          onPress={(e) => {
-            e.stopPropagation();
-            onFavoriteToggle?.();
-          }}
-        >
-          <IconSymbol
-            name={preset.isFavorite ? "heart.fill" : "heart"}
-            size={24}
-            color={preset.isFavorite ? "#FF6B6B" : textColor + '60'}
-          />
-        </TouchableOpacity>
+      {/* Action Buttons - Outside the main TouchableOpacity */}
+      <View style={styles.actionButtonsContainer}>
+        {/* Heart Icon for Favorites - Left */}
+        {onFavoriteToggle && (
+          <TouchableOpacity
+            style={styles.heartButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              console.log('HEART BUTTON PRESSED', preset.id);
+              onFavoriteToggle();
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              name={preset.isFavorite ? "heart.fill" : "heart"}
+              size={24}
+              color={preset.isFavorite ? "#FF6B6B" : textColor + '60'}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* Delete Icon - Right */}
+        {onDelete ? (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            activeOpacity={0.5}
+          >
+            <IconSymbol
+              name="trash"
+              size={22}
+              color={textColor + '80'}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -156,6 +186,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -169,8 +201,17 @@ const styles = StyleSheet.create({
     }),
   },
   cardContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    minWidth: 0,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    zIndex: 10,
+    flexShrink: 0,
   },
   curlWrapper: {
     marginRight: 16,
@@ -213,6 +254,15 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 8,
+  },
+  deleteButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+    zIndex: 10,
   },
 });
 

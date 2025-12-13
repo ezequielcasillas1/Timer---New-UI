@@ -14,6 +14,7 @@ import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppContext } from '@/src/context/AppContext';
 import { theme } from '@/constants/Theme';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 const newUIColors = theme;
 const { width } = Dimensions.get('window');
@@ -25,6 +26,9 @@ export default function JourneyScreen() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ type: 'user' | 'ai'; message: string }>>([]);
   const [showChatInput, setShowChatInput] = useState(false);
+
+  // Refresh sound state on page load
+  useSoundStateRefresh();
 
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
@@ -110,12 +114,7 @@ export default function JourneyScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
 
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Journey</Text>
@@ -536,10 +535,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 12,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 24,

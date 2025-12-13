@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   Platform,
   TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppContext } from '@/src/context/AppContext';
 import SoundPresetCard from '@/components/SoundPresetCard';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 import { theme } from '@/constants/Theme';
 
@@ -24,10 +26,33 @@ export default function FavoritesScreen() {
   const [preJournalText, setPreJournalText] = useState('');
   const [showPreJournal, setShowPreJournal] = useState(false);
 
+  // Refresh sound state on page load
+  useSoundStateRefresh();
+
   const favoritePresets = state.soundPresets.filter((p) => p.isFavorite);
 
   const handleTogglePresetFavorite = (presetId: string) => {
     dispatch({ type: 'TOGGLE_PRESET_FAVORITE', payload: presetId });
+  };
+
+  const handleDeletePreset = (presetId: string) => {
+    Alert.alert(
+      'Delete Preset',
+      'Are you sure you want to delete this preset?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            dispatch({ type: 'DELETE_SOUND_PRESET', payload: presetId });
+          },
+        },
+      ]
+    );
   };
 
   const handleApplyPreset = (preset: typeof favoritePresets[0]) => {
@@ -50,12 +75,7 @@ export default function FavoritesScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
 
           <Text style={styles.headerTitle}>Journey</Text>
 
@@ -146,6 +166,7 @@ export default function FavoritesScreen() {
                     preset={preset}
                     onPress={() => handleApplyPreset(preset)}
                     onFavoriteToggle={() => handleTogglePresetFavorite(preset.id)}
+                    onDelete={() => handleDeletePreset(preset.id)}
                   />
                 ))}
               </View>
@@ -188,10 +209,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,

@@ -13,6 +13,7 @@ import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppContext } from '@/src/context/AppContext';
 import { useAuth } from '@/src/context/AuthContext';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 import { theme } from '@/constants/Theme';
 
@@ -22,6 +23,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { state } = useAppContext();
   const { user, signOut, isGuestMode } = useAuth();
+
+  // Refresh sound state on page load
+  useSoundStateRefresh();
 
   const formatTime = (minutes: number): string => {
     const totalMinutes = Math.floor(minutes);
@@ -125,12 +129,7 @@ export default function ProfileScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header with Settings Icon */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
 
           <Text style={styles.headerTitle}>Profile</Text>
 
@@ -325,10 +324,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,

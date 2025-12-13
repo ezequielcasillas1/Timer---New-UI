@@ -16,6 +16,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import WeeklyProgressChart from '@/components/WeeklyProgressChart';
 import StartSessionModal from '@/components/StartSessionModal';
 import { SOUND_LIBRARY } from '@/src/services/SoundService';
+import { useSoundStateRefresh } from '@/src/hooks/useSoundStateRefresh';
 
 import { theme } from '@/constants/Theme';
 
@@ -30,6 +31,9 @@ export default function NewUIHome() {
   const [selectedRange, setSelectedRange] = useState<'week' | 'month' | 'year'>('week');
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
+  // Refresh sound state on page load
+  useSoundStateRefresh();
 
   const favoriteSounds = (state?.favoriteSoundIds ?? [])
     .map((id) => SOUND_LIBRARY.find((s) => s.id === id))
@@ -199,13 +203,7 @@ export default function NewUIHome() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-            <Text style={styles.backText}>Go back to old UI</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
           
           <TouchableOpacity onPress={() => router.push('/(new-ui)/profile')}>
             <IconSymbol name="person.circle" size={32} color={newUIColors.primary} />
@@ -464,18 +462,9 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingTop: 16,
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  backText: {
-    fontSize: 15,
-    color: newUIColors.text,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
   scrollContent: {
     paddingHorizontal: 24,

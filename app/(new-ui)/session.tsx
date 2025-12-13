@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -14,7 +14,7 @@ import {
   Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppContext, SoundPreset } from '@/src/context/AppContext';
 import { clockService } from '@/src/services/ClockService';
@@ -53,6 +53,7 @@ export default function NewSessionScreen() {
   const [isFollowUpSaved, setIsFollowUpSaved] = useState(false);
   const [isSavingQuickNote, setIsSavingQuickNote] = useState(false);
   const [isQuickNoteSaved, setIsQuickNoteSaved] = useState(false);
+  const [showLovedPresets, setShowLovedPresets] = useState(false);
   
   // Animation for loading spinners
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -76,6 +77,31 @@ export default function NewSessionScreen() {
       setIsRunning(false);
     }
   }, []);
+
+  // Refresh sound state and presets on page load
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh selected preset when presets are updated/deleted
+      if (selectedPresetId) {
+        const presetExists = state.soundPresets.some(p => p.id === selectedPresetId);
+        if (!presetExists) {
+          setSelectedPresetId(state.soundPresets[0]?.id || null);
+        }
+      } else if (state.soundPresets.length > 0) {
+        // If no preset selected but presets exist, select the first one
+        setSelectedPresetId(state.soundPresets[0].id);
+      }
+
+      // Only stop sounds if session is not active
+      // This prevents audio from continuing to play, but preserves enabled flags
+      // so checkboxes remain checked and user preferences are maintained
+      if (!state.session.isActive && !isRunning) {
+        soundService.forceStopAll().catch((error) => {
+          console.error('SessionScreen: Error stopping sounds:', error);
+        });
+      }
+    }, [state.session.isActive, isRunning, selectedPresetId, state.soundPresets])
+  );
 
   // Spinning animation for follow-up loading indicator
   useEffect(() => {
@@ -286,9 +312,15 @@ export default function NewSessionScreen() {
 
   const handleStartSession = async () => {
     if (isRunning) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H1',location:'session.tsx:stop-branch',message:'Stop branch entered',data:{currentlyPlaying:soundService.getCurrentlyPlaying(),master:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       setIsRunning(false);
       clockService.stop();
       await soundService.forceStopAll();
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H2',location:'session.tsx:after-forceStopAll',message:'After forceStopAll in stop branch',data:{currentlyPlaying:soundService.getCurrentlyPlaying()},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       
       const clockData = clockService.getCurrentData();
       const durationSeconds = Math.floor(clockData.sessionElapsedTime);
@@ -354,18 +386,18 @@ export default function NewSessionScreen() {
         
         if (state.sounds.ticking.enabled) {
           console.log('🎵 [Session] Playing ticking sound:', state.sounds.ticking.selectedSound);
-          await soundService.playSound(state.sounds.ticking.selectedSound, true);
+          await soundService.playSound(state.sounds.ticking.selectedSound, true, state.sounds.ticking.volume);
         }
         if (state.sounds.breathing.enabled) {
           console.log('🎵 [Session] Playing breathing sound:', state.sounds.breathing.selectedSound);
           // #region agent log
           fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2',location:'session.tsx:before-breathing-play',message:'Calling playSound for breathing',data:{soundId:state.sounds.breathing.selectedSound},timestamp:Date.now()})}).catch(()=>{});
           // #endregion
-          await soundService.playSound(state.sounds.breathing.selectedSound, true);
+          await soundService.playSound(state.sounds.breathing.selectedSound, true, state.sounds.breathing.volume);
         }
         if (state.sounds.nature.enabled) {
           console.log('🎵 [Session] Playing nature sound:', state.sounds.nature.selectedSound);
-          await soundService.playSound(state.sounds.nature.selectedSound, true);
+          await soundService.playSound(state.sounds.nature.selectedSound, true, state.sounds.nature.volume);
         }
       } else {
         console.log('🎵 [Session] Master sound is OFF - no sounds will play');
@@ -390,7 +422,8 @@ export default function NewSessionScreen() {
     
     if (isRunning && state.sounds.master) {
       if (newEnabled) {
-        soundService.playSound(currentSound.selectedSound, true);
+        const volume = state.sounds[soundType].volume;
+        soundService.playSound(currentSound.selectedSound, true, volume);
       } else {
         soundService.stopSound(currentSound.selectedSound);
       }
@@ -427,7 +460,10 @@ export default function NewSessionScreen() {
     soundService.playHaptic('light');
   };
 
-  const handleVolumeChange = (category: 'ticking' | 'breathing' | 'nature', volume: number) => {
+  const handleVolumeChange = async (category: 'ticking' | 'breathing' | 'nature', volume: number) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:handleVolumeChange',message:'Volume change requested',data:{category,requestedVolume:volume,requestedType:typeof volume,prevVolume:state.sounds[category]?.volume,prevType:typeof (state.sounds as any)?.[category]?.volume,prevIsNaN:Number.isNaN((state.sounds as any)?.[category]?.volume),reqIsNaN:Number.isNaN(volume),reqIsFinite:Number.isFinite(volume)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     dispatch({
       type: 'UPDATE_SOUNDS',
       payload: {
@@ -437,6 +473,13 @@ export default function NewSessionScreen() {
         },
       },
     });
+    
+    // Update volume of currently playing sound in this category
+    if (isRunning && state.sounds.master && state.sounds[category].enabled) {
+      const selectedSoundId = state.sounds[category].selectedSound;
+      console.log(`[Session] Updating volume for ${category}, soundId: ${selectedSoundId}, volume: ${volume}`);
+      await soundService.updateCategoryVolume(category, volume, selectedSoundId);
+    }
     
     // Auto-save preset if one is selected
     if (selectedPresetId) {
@@ -487,6 +530,9 @@ export default function NewSessionScreen() {
   };
 
   const handlePreviewSound = async (soundId: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'session.tsx:handlePreviewSound',message:'Preview clicked',data:{soundId,previewingSoundId,isRunning,isCurrentlyPlaying:previewingSoundId===soundId,masterEnabled:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (isRunning) return; // keep session audio clean
     if (previewingSoundId === soundId) {
       await soundService.forceStopAll();
@@ -495,11 +541,18 @@ export default function NewSessionScreen() {
     }
     setPreviewingSoundId(soundId);
     await soundService.forceStopAll();
-    await soundService.playSound(soundId, false);
-    setTimeout(async () => {
-      await soundService.forceStopAll();
-      setPreviewingSoundId((current) => (current === soundId ? null : current));
-    }, 5000);
+    // Ensure sound service is initialized before preview
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'Initializing service for preview',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    await soundService.initialize();
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'Before playSound call',data:{soundId,willLoop:true},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    await soundService.playSound(soundId, true);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'After playSound call',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   };
 
   return (
@@ -513,12 +566,7 @@ export default function NewSessionScreen() {
         {/* Header (hidden while running for minimal UI) */}
         {!isRunning && (
           <View style={styles.header}>
-            <TouchableOpacity 
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <IconSymbol name="arrow.left" size={24} color={newUIColors.text} />
-            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
             
             <Text style={styles.headerTitle}>Focus Session</Text>
             
@@ -554,10 +602,29 @@ export default function NewSessionScreen() {
 
               {/* Preset Selection */}
               <View style={styles.configCard}>
-                <Text style={styles.configCardTitle}>Preset Selection</Text>
-                <Text style={styles.configCardDescription}>
-                  Pick a preset that contains ticking, breathing, and nature layers
-                </Text>
+                <View style={styles.presetSelectionHeader}>
+                  <View style={styles.presetSelectionTitleContainer}>
+                    <Text style={styles.configCardTitle} numberOfLines={1}>Preset Selection</Text>
+                    <Text style={[styles.configCardDescription, { marginBottom: 0 }]} numberOfLines={2}>
+                      Pick a preset that contains ticking, breathing, and nature layers
+                    </Text>
+                  </View>
+                  {state.soundPresets.some(p => p.isFavorite) && (
+                    <TouchableOpacity
+                      style={[
+                        styles.viewLovedButton,
+                        showLovedPresets && styles.viewLovedButtonActive
+                      ]}
+                      onPress={() => setShowLovedPresets(!showLovedPresets)}
+                    >
+                      <IconSymbol 
+                        name={showLovedPresets ? "heart.fill" : "heart"} 
+                        size={18} 
+                        color={showLovedPresets ? newUIColors.primary : newUIColors.textSecondary} 
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
                 {state.soundPresets.length === 0 ? (
                   <View style={styles.emptyPresetsInline}>
                     <Text style={styles.emptyPresetsInlineText}>
@@ -570,41 +637,60 @@ export default function NewSessionScreen() {
                       <Text style={styles.linkButtonText}>Go to Sounds</Text>
                     </TouchableOpacity>
                   </View>
-                ) : (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.presetScroll}
-                  >
-                    {state.soundPresets.map((preset) => {
-                      const isSelected = preset.id === selectedPresetId;
-                      return (
-                        <TouchableOpacity
-                          key={preset.id}
-                          style={[
-                            styles.presetPill,
-                            isSelected && styles.presetPillActive,
-                          ]}
-                          onPress={() => handleSelectPreset(preset.id)}
-                        >
-                          <Text
+                ) : (() => {
+                  // Filter presets based on showLovedPresets state
+                  const filteredPresets = showLovedPresets 
+                    ? state.soundPresets.filter(p => p.isFavorite)
+                    : state.soundPresets.slice(0, 3); // Show only first 3 presets by default
+                  
+                  // Always include the selected preset if it's not in the filtered list
+                  const selectedPreset = state.soundPresets.find(p => p.id === selectedPresetId);
+                  const displayPresets = selectedPreset && !filteredPresets.find(p => p.id === selectedPresetId)
+                    ? [selectedPreset, ...filteredPresets]
+                    : filteredPresets;
+
+                  return displayPresets.length === 0 ? (
+                    <View style={styles.emptyPresetsInline}>
+                      <Text style={styles.emptyPresetsInlineText}>
+                        {showLovedPresets ? "No loved presets yet. Tap the heart icon on presets to favorite them." : "No presets available."}
+                      </Text>
+                    </View>
+                  ) : (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.presetScroll}
+                    >
+                      {displayPresets.map((preset) => {
+                        const isSelected = preset.id === selectedPresetId;
+                        return (
+                          <TouchableOpacity
+                            key={preset.id}
                             style={[
-                              styles.presetPillText,
-                              isSelected && styles.presetPillTextActive,
+                              styles.presetPill,
+                              isSelected && styles.presetPillActive,
                             ]}
+                            onPress={() => handleSelectPreset(preset.id)}
                           >
-                            {preset.name}
-                          </Text>
-                          {isSelected && (
-                            <View style={styles.presetSelectedBadge}>
-                              <IconSymbol name="checkmark" size={14} color="#FFFFFF" />
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                )}
+                            <Text
+                              style={[
+                                styles.presetPillText,
+                                isSelected && styles.presetPillTextActive,
+                              ]}
+                            >
+                              {preset.name}
+                            </Text>
+                            {isSelected && (
+                              <View style={styles.presetSelectedBadge}>
+                                <IconSymbol name="checkmark" size={14} color="#FFFFFF" />
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  );
+                })()}
               </View>
 
               {/* Category sounds with preview + heart */}
@@ -700,11 +786,27 @@ export default function NewSessionScreen() {
                             </View>
                             {isSelected && (
                               <View style={styles.volumeSliderContainer}>
-                                <Text style={styles.volumeLabel}>Volume: {Math.round(state.sounds[category].volume * 100)}%</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                  {/* #region agent log */}
+                                  {(!Number.isFinite(state.sounds[category].volume) || Number.isNaN(state.sounds[category].volume)) &&
+                                    (fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H4',location:'session.tsx:render-volume',message:'Invalid volume detected during render',data:{category,volume:state.sounds[category].volume,volumeType:typeof state.sounds[category].volume,computedLabel:Math.round(((state.sounds[category].volume as any) ?? 1.0) * 100),computedWidth:(((state.sounds[category].volume as any) ?? 1.0) / 1.5) * 100},timestamp:Date.now()})}).catch(()=>{}), null)}
+                                  {/* #endregion */}
+                                  <Text style={styles.volumeLabel}>Volume: {Math.round((state.sounds[category].volume ?? 1.0) * 100)}%</Text>
+                                  {state.sounds[category].volume > 1.3 && (
+                                    <Text style={{ color: '#FF6B6B', fontSize: 12, fontWeight: '600' }}>⚠️ High</Text>
+                                  )}
+                                </View>
                                 <View style={styles.volumeControls}>
                                   <TouchableOpacity
                                     style={styles.volumeButton}
-                                    onPress={() => handleVolumeChange(category, Math.max(0, state.sounds[category].volume - 0.1))}
+                                    onPress={() => {
+                                      const baseVol: any = (state.sounds as any)?.[category]?.volume;
+                                      const nextVol = Math.max(0, baseVol - 0.1);
+                                      // #region agent log
+                                      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:minus-press',message:'Minus pressed',data:{category,baseVol,baseType:typeof baseVol,nextVol,nextType:typeof nextVol,baseIsNaN:Number.isNaN(baseVol),nextIsNaN:Number.isNaN(nextVol)},timestamp:Date.now()})}).catch(()=>{});
+                                      // #endregion
+                                      handleVolumeChange(category, nextVol);
+                                    }}
                                   >
                                     <IconSymbol name="minus" size={16} color={newUIColors.text} />
                                   </TouchableOpacity>
@@ -712,13 +814,20 @@ export default function NewSessionScreen() {
                                     <View 
                                       style={[
                                         styles.volumeBar,
-                                        { width: `${Math.min(state.sounds[category].volume * 100, 100)}%`, backgroundColor: newUIColors.primary }
+                                        { width: `${Math.min(((state.sounds[category].volume ?? 1.0) / 1.5) * 100, 100)}%`, backgroundColor: (state.sounds[category].volume ?? 1.0) > 1.3 ? '#FF6B6B' : newUIColors.primary }
                                       ]} 
                                     />
                                   </View>
                                   <TouchableOpacity
                                     style={styles.volumeButton}
-                                    onPress={() => handleVolumeChange(category, Math.min(1.2, state.sounds[category].volume + 0.1))}
+                                    onPress={() => {
+                                      const baseVol: any = (state.sounds as any)?.[category]?.volume;
+                                      const nextVol = Math.min(1.5, baseVol + 0.1);
+                                      // #region agent log
+                                      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:plus-press',message:'Plus pressed',data:{category,baseVol,baseType:typeof baseVol,nextVol,nextType:typeof nextVol,baseIsNaN:Number.isNaN(baseVol),nextIsNaN:Number.isNaN(nextVol)},timestamp:Date.now()})}).catch(()=>{});
+                                      // #endregion
+                                      handleVolumeChange(category, nextVol);
+                                    }}
                                   >
                                     <IconSymbol name="plus" size={16} color={newUIColors.text} />
                                   </TouchableOpacity>
@@ -859,7 +968,7 @@ export default function NewSessionScreen() {
                   Adjust the intensity/pace of sound layers
                 </Text>
                 <View style={styles.optionsRow}>
-                  {[0.8, 1, 1.2, 1.5].map((speed) => (
+                  {[0.8, 1, 1.2, 1.5, 2, 4, 8].map((speed) => (
                     <TouchableOpacity
                       key={speed}
                       disabled={!state.session.speedMultiplierEnabled}
@@ -1042,7 +1151,7 @@ export default function NewSessionScreen() {
                   <View style={styles.sessionSettingRow}>
                     <Text style={styles.sessionSettingLabel}>Speed: {state.session.speedSetting}x</Text>
                     <View style={styles.sessionSettingControls}>
-                      {[0.8, 1, 1.2, 1.5].map((val) => (
+                      {[0.8, 1, 1.2, 1.5, 2, 4, 8].map((val) => (
                         <TouchableOpacity
                           key={val}
                           style={[
@@ -1297,10 +1406,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  backButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,
@@ -1366,6 +1474,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
+    width: '100%',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -1392,12 +1501,37 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: newUIColors.text,
     marginBottom: 8,
+    flexShrink: 1,
   },
   configCardDescription: {
     fontSize: 14,
     color: newUIColors.textSecondary,
     marginBottom: 16,
     lineHeight: 20,
+    flexShrink: 1,
+  },
+  presetSelectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    width: '100%',
+  },
+  presetSelectionTitleContainer: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  viewLovedButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: newUIColors.background,
+    flexShrink: 0,
+  },
+  viewLovedButtonActive: {
+    backgroundColor: newUIColors.primary + '20',
   },
   toggleButton: {
     width: 40,
