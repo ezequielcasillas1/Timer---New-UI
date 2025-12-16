@@ -291,7 +291,7 @@ export default function SignInScreen() {
     try {
       console.log('SignIn: Attempting to sign in user:', { 
         email: email.trim(),
-        supabaseUrl: supabase.supabaseUrl,
+        supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
         timestamp: new Date().toISOString()
       });
       

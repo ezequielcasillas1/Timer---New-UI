@@ -8,7 +8,7 @@ export interface RealTimeData {
 export class RealTimeService {
   private static instance: RealTimeService;
   private subscribers: ((data: RealTimeData) => void)[] = [];
-  private interval: NodeJS.Timeout | null = null;
+  private interval: ReturnType<typeof setInterval> | null = null;
   private isRunning: boolean = false;
 
   static getInstance(): RealTimeService {

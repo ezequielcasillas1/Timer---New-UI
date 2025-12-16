@@ -45,6 +45,117 @@ export type Database = {
           }
         ]
       }
+      sessions: {
+        Row: {
+          id: string
+          user_id: string
+          mode: "speed" | "locked"
+          target_duration: number
+          actual_duration: number | null
+          speed_multiplier: number | null
+          time_slot_multiplier: number | null
+          efficiency_score: number | null
+          efficiency_notes: string | null
+          mood_rating: number | null
+          feedback_text: string | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          mode: "speed" | "locked"
+          target_duration: number
+          actual_duration?: number | null
+          speed_multiplier?: number | null
+          time_slot_multiplier?: number | null
+          efficiency_score?: number | null
+          efficiency_notes?: string | null
+          mood_rating?: number | null
+          feedback_text?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          mode?: "speed" | "locked"
+          target_duration?: number
+          actual_duration?: number | null
+          speed_multiplier?: number | null
+          time_slot_multiplier?: number | null
+          efficiency_score?: number | null
+          efficiency_notes?: string | null
+          mood_rating?: number | null
+          feedback_text?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          sounds_master: boolean | null
+          sounds_haptics: boolean | null
+          sounds_ticking: boolean | null
+          sounds_breathing: boolean | null
+          sounds_nature: boolean | null
+          sound_ticking_type: string | null
+          sound_breathing_type: string | null
+          sound_nature_type: string | null
+          speed_multiplier: number | null
+          time_slot_multiplier: number | null
+          clock_style: string | null
+          theme: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sounds_master?: boolean | null
+          sounds_haptics?: boolean | null
+          sounds_ticking?: boolean | null
+          sounds_breathing?: boolean | null
+          sounds_nature?: boolean | null
+          sound_ticking_type?: string | null
+          sound_breathing_type?: string | null
+          sound_nature_type?: string | null
+          speed_multiplier?: number | null
+          time_slot_multiplier?: number | null
+          clock_style?: string | null
+          theme?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sounds_master?: boolean | null
+          sounds_haptics?: boolean | null
+          sounds_ticking?: boolean | null
+          sounds_breathing?: boolean | null
+          sounds_nature?: boolean | null
+          sound_ticking_type?: string | null
+          sound_breathing_type?: string | null
+          sound_nature_type?: string | null
+          speed_multiplier?: number | null
+          time_slot_multiplier?: number | null
+          clock_style?: string | null
+          theme?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

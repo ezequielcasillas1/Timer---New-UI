@@ -42,6 +42,7 @@ export interface UserSettings {
   sound_nature_type: string | null;
   speed_multiplier: number | null;
   time_slot_multiplier: number | null;
+  clock_style: string | null;
   theme: string | null;
   created_at: string;
   updated_at: string;
@@ -270,6 +271,7 @@ class DataService {
             sound_nature_type: 'nature-gentle-rain',
             speed_multiplier: 1.0,
             time_slot_multiplier: 1,
+            clock_style: 'digital-modern',
             theme: 'auto',
           }
         ])

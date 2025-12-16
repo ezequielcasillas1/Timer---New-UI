@@ -29,7 +29,7 @@ export class BackgroundAudioService {
   private recording: Audio.Recording | null = null;
   private isMonitoring: boolean = false;
   private isInitialized: boolean = false;
-  private meteringInterval: NodeJS.Timeout | null = null;
+  private meteringInterval: ReturnType<typeof setInterval> | null = null;
   private onSoundDetectedCallback: ((data: AudioLevelData) => void) | null = null;
 
   /**

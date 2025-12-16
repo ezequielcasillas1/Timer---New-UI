@@ -92,15 +92,25 @@ export default function NewUIHome() {
       nature: boolean;
     };
   }) => {
+    const safeTimeSlotDuration: 0 | 15 | 30 | 50 | 60 =
+      config.timeSlotDuration === 0 ||
+      config.timeSlotDuration === 15 ||
+      config.timeSlotDuration === 30 ||
+      config.timeSlotDuration === 50 ||
+      config.timeSlotDuration === 60
+        ? config.timeSlotDuration
+        : 0;
+
     // Update session state with configuration
     dispatch({
       type: 'UPDATE_SESSION',
       payload: {
         targetDuration: config.targetDuration,
-        timeSlotDuration: config.timeSlotDuration,
+        // Session timeSlotDuration does not support 0; use the existing value when disabled.
+        timeSlotDuration: safeTimeSlotDuration === 0 ? state.session.timeSlotDuration : safeTimeSlotDuration,
         slotEveryMinutes: config.slotEveryMinutes,
         speedSetting: config.speedMultiplier,
-        timeSlotEnabled: config.timeSlotDuration > 0,
+        timeSlotEnabled: safeTimeSlotDuration > 0,
         speedMultiplierEnabled: config.speedMultiplier > 1,
       },
     });

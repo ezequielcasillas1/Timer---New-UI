@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
   },
   warningButton: {
-    backgroundColor: colors.warning,
+    backgroundColor: colors.secondary,
   },
   infoButton: {
     backgroundColor: '#3498db',

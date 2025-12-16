@@ -730,15 +730,9 @@ export default function SoundsScreen() {
             {displayedPresets.length === 0 ? (
               <View style={styles.emptyPresets}>
                 <IconSymbol name="music.note.list" size={48} color={newUIColors.textSecondary} />
-                <Text style={styles.emptyPresetsText}>
-                  {selectedTab === 'favorites' 
-                    ? 'No favorite presets yet' 
-                    : 'No presets saved yet'}
-                </Text>
+                <Text style={styles.emptyPresetsText}>No presets saved yet</Text>
                 <Text style={styles.emptyPresetsHint}>
-                  {selectedTab === 'favorites'
-                    ? 'Tap the heart icon on a preset to add it to favorites'
-                    : 'Configure your sounds and tap "Save Preset" to create one'}
+                  Configure your sounds and tap "Save Preset" to create one
                 </Text>
               </View>
             ) : (

@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 
 /**
  * AUDIO CONFIGURATION - Flexible audio modes for the app
@@ -38,8 +38,8 @@ export async function initializeAudioMode(): Promise<void> {
       playsInSilentModeIOS: true, // ✅ Play even in silent mode
       shouldDuckAndroid: true, // Duck other audio on Android
       playThroughEarpieceAndroid: false, // Use speaker on Android
-      interruptionModeIOS: Audio.InterruptionModeIOS.DoNotMix, // ✅ CRITICAL: DoNotMix + audio background mode = continuous playback
-      interruptionModeAndroid: Audio.InterruptionModeAndroid.DoNotMix,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix, // ✅ CRITICAL: DoNotMix + audio background mode = continuous playback
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
     });
 
     isAudioModeInitialized = true;
@@ -81,8 +81,8 @@ export async function initializeRecordingMode(): Promise<void> {
       playsInSilentModeIOS: true,
       shouldDuckAndroid: true,
       playThroughEarpieceAndroid: false,
-      interruptionModeIOS: Audio.InterruptionModeIOS.DoNotMix, // Recording requires exclusive mode
-      interruptionModeAndroid: Audio.InterruptionModeAndroid.DoNotMix,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix, // Recording requires exclusive mode
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
     });
 
     currentAudioMode = 'recording';

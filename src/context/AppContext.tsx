@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState as RNAppState, AppStateStatus } from 'react-native';
 import { ClockStyle } from '@/src/services/ClockService';
 import { useAuth } from './AuthContext';
 import { dataService, SessionAnalytics } from '@/src/services/DataService';
@@ -76,6 +76,10 @@ export interface SessionHistoryItem {
   mode: 'speed' | 'locked';
   efficiency: number;
   notes: string;
+  // Optional fields referenced by some UI screens (may be absent for older/local entries)
+  startTime?: Date;
+  actualDuration?: number;
+  mood?: number;
 }
 
 export interface Feedback {
@@ -585,7 +589,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = RNAppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();

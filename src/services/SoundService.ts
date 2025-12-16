@@ -42,70 +42,70 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     id: 'breathing-deep-calm',
     title: 'Deep Calm Breathing',
     description: 'Slow, deep breathing sounds for relaxation and focus',
-    localFile: require('../../assets/sounds/breathing/deep-calm-breathing.wav'),
+    localFile: require('../../assets/sounds/breathing/deep-calm-breathing-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-gentle-waves',
     title: 'Gentle Wave Breathing',
     description: 'Soft breathing pattern like gentle ocean waves',
-    localFile: require('../../assets/sounds/breathing/gentle-wave-breathing.wav'),
+    localFile: require('../../assets/sounds/breathing/gentle-wave-breathing-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-meditative',
     title: 'Meditative Breathing',
     description: 'Peaceful meditative breathing for deep concentration',
-    localFile: require('../../assets/sounds/breathing/meditative-breathing.wav'),
+    localFile: require('../../assets/sounds/breathing/meditative-breathing-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-woman-sigh',
     title: 'Woman Breathing & Sighing',
     description: 'Middle-aged woman breathing and sighing naturally',
-    localFile: require('../../assets/sounds/breathing/woman-breathing-sigh.wav'),
+    localFile: require('../../assets/sounds/breathing/woman-breathing-sigh-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-woman-nose',
     title: 'Woman Breathing Through Nose',
     description: 'Natural female nose breathing for calm focus',
-    localFile: require('../../assets/sounds/breathing/woman-breathing-nose.wav'),
+    localFile: require('../../assets/sounds/breathing/woman-breathing-nose-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-woman-mouth',
     title: 'Woman Breathing Through Mouth',
     description: 'Natural female mouth breathing pattern',
-    localFile: require('../../assets/sounds/breathing/woman-breathing-mouth.wav'),
+    localFile: require('../../assets/sounds/breathing/woman-breathing-mouth-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-woman-outofbreath',
     title: 'Woman Out of Breath (Slow)',
     description: 'Young woman breathing slowly after exertion',
-    localFile: require('../../assets/sounds/breathing/woman-out-of-breath.wav'),
+    localFile: require('../../assets/sounds/breathing/woman-out-of-breath-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-man-stereo',
     title: 'Man Breathing (Stereo)',
     description: 'Male breathing recorded in stereo, close proximity',
-    localFile: require('../../assets/sounds/breathing/man-breathing-stereo.wav'),
+    localFile: require('../../assets/sounds/breathing/man-breathing-stereo-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-man-heavy',
     title: 'Man Heavy Breathing',
     description: 'Male breathing heavily, deep and pronounced',
-    localFile: require('../../assets/sounds/breathing/man-heavy-breathing.wav'),
+    localFile: require('../../assets/sounds/breathing/man-heavy-breathing-16.wav'),
     category: 'breathing'
   },
   {
     id: 'breathing-underwater',
     title: 'Underwater Breathing',
     description: 'Breathing with underwater atmosphere and bubble effects',
-    localFile: require('../../assets/sounds/breathing/underwater-breathing.wav'),
+    localFile: require('../../assets/sounds/breathing/underwater-breathing-16.wav'),
     category: 'breathing'
   },
   
@@ -122,21 +122,21 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     id: 'ticking-vintage-metronome',
     title: 'Vintage Metronome',
     description: 'Rhythmic metronome ticking for steady focus',
-    localFile: require('../../assets/sounds/ticking/vintage-metronome.wav'),
+    localFile: require('../../assets/sounds/ticking/vintage-metronome-16.wav'),
     category: 'ticking'
   },
   {
     id: 'ticking-modern-digital',
     title: 'Modern Digital Tick',
     description: 'Clean digital ticking sound for contemporary focus',
-    localFile: require('../../assets/sounds/ticking/modern-digital-tick.wav'),
+    localFile: require('../../assets/sounds/ticking/modern-digital-tick-16.wav'),
     category: 'ticking'
   },
   {
     id: 'ticking-soft-wooden',
     title: 'Soft Wooden Clock',
     description: 'Gentle wooden clock ticking for ambient focus',
-    localFile: require('../../assets/sounds/ticking/soft-wooden-clock.wav'),
+    localFile: require('../../assets/sounds/ticking/soft-wooden-clock-16.wav'),
     category: 'ticking'
   },
   {
@@ -150,7 +150,7 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     id: 'ticking-mechanical-watch',
     title: 'Mechanical Watch',
     description: 'Precise mechanical watch ticking for structured focus',
-    localFile: require('../../assets/sounds/ticking/mechanical-watch.wav'),
+    localFile: require('../../assets/sounds/ticking/mechanical-watch-16.wav'),
     category: 'ticking'
   },
   
@@ -159,56 +159,56 @@ export const SOUND_LIBRARY: SoundDefinition[] = [
     id: 'nature-forest-ambience',
     title: 'Forest Ambience',
     description: 'Peaceful forest sounds with birds and rustling leaves',
-    localFile: require('../../assets/sounds/nature/forest-ambience.wav'),
+    localFile: require('../../assets/sounds/nature/forest-ambience-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-gentle-rain',
     title: 'Gentle Rain',
     description: 'Soft rainfall sounds for calming background ambience',
-    localFile: require('../../assets/sounds/nature/gentle-rain.wav'),
+    localFile: require('../../assets/sounds/nature/gentle-rain-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-mountain-stream',
     title: 'Mountain Stream',
     description: 'Flowing water sounds from a peaceful mountain stream',
-    localFile: require('../../assets/sounds/nature/mountain-stream.wav'),
+    localFile: require('../../assets/sounds/nature/mountain-stream-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-spa-ambience',
     title: 'Spa Ambience',
     description: 'Tranquil spa environment sounds for deep relaxation',
-    localFile: require('../../assets/sounds/nature/spa-ambience.wav'),
+    localFile: require('../../assets/sounds/nature/spa-ambience-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-wind-chimes',
     title: 'Wind Chimes',
     description: 'Metal wind chimes swayed at different speeds',
-    localFile: require('../../assets/sounds/nature/wind-chimes-chelly.wav'),
+    localFile: require('../../assets/sounds/nature/wind-chimes-chelly-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-wind-chimes-relaxing',
     title: 'Relaxing Wind Chimes',
     description: 'Evening wind chimes for purifying and enhancing energy',
-    localFile: require('../../assets/sounds/nature/relaxing-wind-chimes.wav'),
+    localFile: require('../../assets/sounds/nature/relaxing-wind-chimes-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-wind-chimes-gregorian',
     title: 'Gregorian Wind Chimes',
     description: 'Gregorian wind chimes playing gently in the wind',
-    localFile: require('../../assets/sounds/nature/gregorian-wind-chimes.wav'),
+    localFile: require('../../assets/sounds/nature/gregorian-wind-chimes-16.wav'),
     category: 'nature'
   },
   {
     id: 'nature-wind-chimes-playground',
     title: 'Playground Wind Chimes',
     description: 'Distant wind chimes with meditative far background ambience',
-    localFile: require('../../assets/sounds/nature/playground-wind-chimes.wav'),
+    localFile: require('../../assets/sounds/nature/playground-wind-chimes-16.wav'),
     category: 'nature'
   },
   {
@@ -226,10 +226,10 @@ export class SoundService {
   private masterEnabled: boolean = true;
   private hapticsEnabled: boolean = true;
   private currentlyPlaying: Set<string> = new Set();
-  private fadeOutTimers: { [key: string]: NodeJS.Timeout } = {};
-  private crossfadeLoops: { [key: string]: { instances: Audio.Sound[], active: boolean, scheduledTimers: NodeJS.Timeout[] } } = {};
+  private fadeOutTimers: { [key: string]: ReturnType<typeof setTimeout> } = {};
+  private crossfadeLoops: { [key: string]: { instances: Audio.Sound[], active: boolean, scheduledTimers: ReturnType<typeof setTimeout>[] } } = {};
   private appStateSubscription: { remove: () => void } | null = null;
-  private keepAliveInterval: NodeJS.Timeout | null = null;
+  private keepAliveInterval: ReturnType<typeof setInterval> | null = null;
   private activeSoundIds: Set<string> = new Set(); // Track which sounds should be playing
   private debugStatusCounts: Record<string, number> = {};
   private debugLastPos: Record<string, number> = {};
@@ -250,10 +250,6 @@ export class SoundService {
       const shouldLog = count <= 6 || hasError || posWentBack;
 
       if (!shouldLog) return;
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H1',location:'SoundService.ts:attachDebugStatus',message:'PlaybackStatusUpdate',data:{soundId,category:soundDef.category,isLoaded:!!s.isLoaded,isPlaying:!!s.isPlaying,isBuffering:!!s.isBuffering,positionMillis:s.positionMillis,durationMillis:s.durationMillis,volume:s.volume,rate:s.rate,didJustFinish:!!s.didJustFinish,shouldCorrectPitch:!!s.shouldCorrectPitch,error:s.error?String(s.error):undefined,posWentBack,count,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     });
   }
 
@@ -401,9 +397,6 @@ export class SoundService {
   };
 
   async loadSound(soundId: string): Promise<Audio.Sound | null> {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'loadSound entry',data:{soundId,alreadyCached:!!this.sounds[soundId]},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (this.sounds[soundId]) {
       return this.sounds[soundId];
     }
@@ -411,9 +404,6 @@ export class SoundService {
     const soundDef = SOUND_LIBRARY.find(s => s.id === soundId);
     if (!soundDef) {
       console.log(`SoundService: Sound definition not found for ${soundId}`);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Sound definition not found in loadSound',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return null;
     }
 
@@ -455,44 +445,26 @@ export class SoundService {
       this.sounds[soundId] = sound;
       console.log(`🔊 [WEB DEBUG] Sound cached successfully: ${soundId}`);
       this.attachDebugStatus(soundId, soundDef, sound);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Sound loaded successfully',data:{soundId,title:soundDef.title,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return sound;
     } catch (error) {
       console.error(`❌ [SoundService] Error loading ${soundId}:`, error);
       console.error(`❌ [WEB DEBUG] Platform: ${Platform.OS}, Error details:`, error);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:loadSound',message:'Error loading sound',data:{soundId,error:String(error),errorStack:error instanceof Error?error.stack:undefined,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return null;
     }
   }
 
   async playSound(soundId: string, loop: boolean = true, volume: number = 1.0) {
     console.log(`🔊 [SoundService] playSound called: ${soundId}, loop: ${loop}, volume: ${volume}, masterEnabled: ${this.masterEnabled}, initialized: ${this.isInitialized}`);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'playSound entry',data:{soundId,loop,volume,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (!this.masterEnabled || !this.isInitialized) {
       console.log('SoundService: Sound disabled or not initialized');
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'Early return - not initialized or disabled',data:{soundId,masterEnabled:this.masterEnabled,isInitialized:this.isInitialized},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return;
     }
 
     const soundDef = SOUND_LIBRARY.find(s => s.id === soundId);
     if (!soundDef) {
       console.log(`SoundService: Sound definition not found for ${soundId}`);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Sound definition not found',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return;
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Sound definition found',data:{soundId,title:soundDef.title,hasLocalFile:!!soundDef.localFile,hasFreesoundId:!!soundDef.freesoundId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     // Stop if already playing
     if (this.currentlyPlaying.has(soundId)) {
@@ -505,52 +477,22 @@ export class SoundService {
     try {
       if (loop) {
         // New path: rely on processed perfect-loop assets, no crossfade layering
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop path - before loadSound',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const sound = await this.loadSound(soundId);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop path - after loadSound',data:{soundId,soundLoaded:!!sound},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (sound) {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop path enter',data:{soundId,category:soundDef.category,requestedVolume:volume,platform:Platform.OS},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           await sound.setIsLoopingAsync(true);
           await sound.setVolumeAsync(0);
           const preStatus = await sound.getStatusAsync();
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop volume primed to 0',data:{soundId,platform:Platform.OS,volume:(preStatus as any).volume,position:(preStatus as any).positionMillis,isPlaying:(preStatus as any).isPlaying},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           await sound.playAsync();
           // Re-assert volume 0 immediately after play starts
           await sound.setVolumeAsync(0);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'After playAsync (pre-seek)',data:{soundId,status:(await sound.getStatusAsync() as any)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           // Skip first 50ms of file to dodge leading transients
           await sound.setPositionAsync(50);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'audio-pop-1',hypothesisId:'H1',location:'SoundService.ts:playSound',message:'After setPositionAsync(50)',data:{soundId,status:(await sound.getStatusAsync() as any)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           const postPlayStatus = await sound.getStatusAsync();
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Post-play volume reasserted to 0',data:{soundId,platform:Platform.OS,volume:(postPlayStatus as any).volume,position:(postPlayStatus as any).positionMillis,isPlaying:(postPlayStatus as any).isPlaying},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           // Small pre-fade guard to let playback settle before ramping volume
           await new Promise(resolve => setTimeout(resolve, 50));
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadein-2s',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Post-play pre-fade delay complete',data:{soundId,delayMs:50},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           this.currentlyPlaying.add(soundId);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:playSound',message:'Loop fade-in start',data:{soundId,fadeMs:2000,targetVolume:volume,platform:Platform.OS,category:soundDef.category},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           this.fadeIn(sound, 2000, volume);
         } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H3',location:'SoundService.ts:playSound',message:'Loop path - sound failed to load',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
         }
       } else {
         // Single playback with fade-out
@@ -573,9 +515,6 @@ export class SoundService {
       }
     } catch (error) {
       console.log(`SoundService: ❌ Error playing ${soundDef.title}:`, error);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H5',location:'SoundService.ts:playSound',message:'Error in playSound',data:{soundId,error:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     }
   }
 
@@ -710,7 +649,7 @@ export class SoundService {
       const nextInstanceTimer = setTimeout(async () => {
         if (this.crossfadeLoops[soundId] && this.crossfadeLoops[soundId].active) {
           console.log(`[CROSSFADE] ⏰ Time to start next instance for ${soundId}`);
-          await this.playNextCrossfadeInstance(soundId, soundDef, false);
+          await this.playNextCrossfadeInstance(soundId, soundDef, volume, false);
         }
       }, nextInstanceDelay);
       
@@ -748,9 +687,6 @@ export class SoundService {
   }
 
   private fadeIn(sound: Audio.Sound, duration: number, targetVolume: number = 1) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn invoked',data:{duration,targetVolume},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     const steps = 20; // Number of volume steps
     const stepDuration = duration / steps;
     const volumeIncrement = targetVolume / steps;
@@ -762,23 +698,12 @@ export class SoundService {
       
       try {
         await sound.setVolumeAsync(newVolume);
-        // #region agent log
-        if (currentStep % 5 === 0 || currentStep === 1) { // Log every 5th step and first step
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn volume step',data:{currentStep,newVolume,targetVolume,steps},timestamp:Date.now()})}).catch(()=>{});
-        }
-        // #endregion
       } catch (error) {
         clearInterval(fadeInterval);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn error',data:{duration,targetVolume,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       }
       
       if (currentStep >= steps) {
         clearInterval(fadeInterval);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H2',location:'SoundService.ts:fadeIn',message:'FadeIn complete',data:{duration,targetVolume,finalVolume:newVolume},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       }
     }, stepDuration);
   }
@@ -842,9 +767,6 @@ export class SoundService {
     const soundName = soundDef ? soundDef.title : soundId;
     
     console.log(`SoundService: 🛑 Stopping ${soundName}...`);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H4',location:'SoundService.ts:stopSound:start',message:'stopSound called',data:{soundId,hasInstance:!!this.sounds[soundId],currentlyPlaying:Array.from(this.currentlyPlaying)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     
     // Remove from active sounds (don't restore this)
     this.activeSoundIds.delete(soundId);
@@ -935,17 +857,11 @@ export class SoundService {
           await sound.setVolumeAsync(newVolume);
         } catch (error) {
           clearInterval(fadeInterval);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadeout-1s',hypothesisId:'H5',location:'SoundService.ts:fadeOut',message:'FadeOut error',data:{duration,error:String(error)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           resolve();
         }
         
         if (currentStep >= steps) {
           clearInterval(fadeInterval);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'fadeout-1s',hypothesisId:'H5',location:'SoundService.ts:fadeOut',message:'FadeOut complete',data:{duration},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           resolve();
         }
       }, stepDuration);
@@ -954,9 +870,6 @@ export class SoundService {
 
   async forceStopAll() {
     console.log('SoundService: Force stopping all sounds');
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H3',location:'SoundService.ts:forceStopAll:start',message:'forceStopAll start',data:{currentlyPlaying:Array.from(this.currentlyPlaying),crossfadeLoops:Object.keys(this.crossfadeLoops),cachedSounds:Object.keys(this.sounds)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     
     // Clear all active sound tracking
     this.activeSoundIds.clear();
@@ -1026,9 +939,6 @@ export class SoundService {
     
     this.currentlyPlaying.clear();
     console.log('SoundService: All sounds stopped and unloaded');
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H3',location:'SoundService.ts:forceStopAll:end',message:'forceStopAll complete',data:{remainingCached:Object.keys(this.sounds),remainingCrossfade:Object.keys(this.crossfadeLoops)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
   }
 
   async setMasterEnabled(enabled: boolean) {

@@ -57,7 +57,7 @@ export default function AnalyticsScreen() {
     {
       icon: 'timer',
       label: 'Total time',
-      value: `${Math.floor(state.progress.totalMinutes || 0)} min`,
+      value: `${Math.floor(state.progress.totalTime || 0)} min`,
       color: newUIColors.primary,
     },
     {

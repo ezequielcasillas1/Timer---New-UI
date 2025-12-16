@@ -318,7 +318,7 @@ export default function JourneyScreen() {
                             {session.mode === 'speed' ? 'Speed Session' : 'Locked Session'}
                           </Text>
                           <Text style={styles.historyDate} numberOfLines={1}>
-                            {new Date(session.startTime).toLocaleDateString('en-US', {
+                            {new Date(session.startTime ?? session.date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               hour: 'numeric',
@@ -328,7 +328,7 @@ export default function JourneyScreen() {
                         </View>
                         <View style={styles.historyBadge}>
                           <Text style={styles.historyDuration}>
-                            {Math.round(session.actualDuration / 60)}m
+                            {Math.round(((session.actualDuration ?? session.duration) / 60))}m
                           </Text>
                         </View>
                       </View>
@@ -346,7 +346,7 @@ export default function JourneyScreen() {
                             <Text style={styles.historyMetricText}>{session.efficiency}% efficiency</Text>
                           </View>
                         )}
-                        {session.mood && (
+                        {session.mood != null && (
                           <View style={styles.historyMetric}>
                             <Text style={styles.historyMetricText}>{getMoodEmoji(session.mood)}</Text>
                           </View>

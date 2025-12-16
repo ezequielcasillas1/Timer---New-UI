@@ -7,7 +7,7 @@ interface EightBitClockViewProps {
 }
 
 export function EightBitClockView({ time }: EightBitClockViewProps) {
-  const formatTime = (date: Date): string => {
+  const formatTime = (date: Date): { hours: string; minutes: string; seconds: string; ampm: string } => {
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const seconds = date.getSeconds();
@@ -50,7 +50,7 @@ export function EightBitClockView({ time }: EightBitClockViewProps) {
           <View style={styles.timeRow}>
             {/* Hours */}
             <View style={styles.digitGroup}>
-              {hours.split('').map((d, i) => renderPixelDigit(d, i))}
+              {hours.split('').map((d: string, i: number) => renderPixelDigit(d, i))}
             </View>
 
             {/* Separator */}
@@ -61,7 +61,7 @@ export function EightBitClockView({ time }: EightBitClockViewProps) {
 
             {/* Minutes */}
             <View style={styles.digitGroup}>
-              {minutes.split('').map((d, i) => renderPixelDigit(d, i + 2))}
+              {minutes.split('').map((d: string, i: number) => renderPixelDigit(d, i + 2))}
             </View>
 
             {/* Separator */}
@@ -72,7 +72,7 @@ export function EightBitClockView({ time }: EightBitClockViewProps) {
 
             {/* Seconds */}
             <View style={styles.digitGroup}>
-              {seconds.split('').map((d, i) => renderPixelDigit(d, i + 4))}
+              {seconds.split('').map((d: string, i: number) => renderPixelDigit(d, i + 4))}
             </View>
           </View>
 

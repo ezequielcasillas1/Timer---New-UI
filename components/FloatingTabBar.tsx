@@ -90,7 +90,7 @@ export default function FloatingTabBar({
   }, [activeTabIndex, animatedValue]);
 
   const handleTabPress = (route: string) => {
-    router.push(route);
+    router.push(route as any);
   };
 
   // Remove unnecessary tabBarStyle animation to prevent flickering
@@ -145,7 +145,7 @@ export default function FloatingTabBar({
       backgroundColor: theme.dark
         ? 'rgba(255, 255, 255, 0.08)' // Subtle white overlay in dark mode
         : 'rgba(0, 0, 0, 0.04)', // Subtle black overlay in light mode
-      width: `${(100 / tabs.length) - 3}%`, // Dynamic width based on number of tabs
+      width: `${(100 / tabs.length) - 3}%` as `${number}%`, // Dynamic width based on number of tabs
     },
   };
 
@@ -163,7 +163,7 @@ export default function FloatingTabBar({
           style={[dynamicStyles.blurContainer, { borderRadius }]}
         >
           <View style={dynamicStyles.background} />
-          <Animated.View style={[dynamicStyles.indicator, indicatorStyle]} />
+          <Animated.View style={[dynamicStyles.indicator as any, indicatorStyle]} />
           <View style={styles.tabsContainer}>
             {tabs.map((tab, index) => {
               const isActive = activeTabIndex === index;

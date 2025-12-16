@@ -8,7 +8,7 @@ export class TestSoundService {
     for (const soundDef of SOUND_LIBRARY) {
       console.log(`TestSoundService: Testing ${soundDef.title} (${soundDef.category})`);
       console.log(`  Description: ${soundDef.description}`);
-      console.log(`  URL: ${soundDef.url}`);
+      console.log(`  Source: ${soundDef.freesoundId ? `freesound:${soundDef.freesoundId}` : (soundDef.localFile ? 'local' : 'unknown')}`);
       
       await soundService.playSound(soundDef.id, false);
       await new Promise(resolve => setTimeout(resolve, 2000)); // Play for 2 seconds
@@ -61,7 +61,7 @@ export class TestSoundService {
     if (soundDef) {
       console.log(`  Title: ${soundDef.title}`);
       console.log(`  Description: ${soundDef.description}`);
-      console.log(`  URL: ${soundDef.url}`);
+      console.log(`  Source: ${soundDef.freesoundId ? `freesound:${soundDef.freesoundId}` : (soundDef.localFile ? 'local' : 'unknown')}`);
     }
     
     await soundService.playSound(soundId, false);

@@ -205,3 +205,35 @@ export const setupErrorLogging = () => {
     }
   }
 };
+
+// Minimal monitoring API used by `components/ErrorTestComponent.tsx`
+export function addBreadcrumb(message: string, category?: string, data?: any) {
+  console.log('[breadcrumb]', category ?? 'app', message, data ?? '');
+}
+
+export function logInfo(message: string, context?: any) {
+  console.log('[info]', message, context ?? '');
+}
+
+export function logWarning(message: string, context?: any) {
+  console.warn('[warn]', message, context ?? '');
+}
+
+export function logError(error: Error, context?: any) {
+  console.error('[error]', error?.message ?? String(error), context ?? '');
+}
+
+export function reportError(error: Error, context?: any) {
+  logError(error, context);
+}
+
+export function startTransaction(name: string, _op?: string) {
+  const startedAt = Date.now();
+  return {
+    name,
+    finish: () => {
+      const ms = Date.now() - startedAt;
+      console.log('[txn]', name, `${ms}ms`);
+    },
+  };
+}

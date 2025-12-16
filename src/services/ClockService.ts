@@ -89,8 +89,8 @@ export const CLOCK_STYLES: ClockStyleDefinition[] = [
 export class ClockService {
   private subscribers: ((data: ClockData) => void)[] = [];
   private realTimeUnsubscribe: (() => void) | null = null;
-  private sessionInterval: NodeJS.Timeout | null = null;
-  private slotInterval: NodeJS.Timeout | null = null;
+  private sessionInterval: ReturnType<typeof setInterval> | null = null;
+  private slotInterval: ReturnType<typeof setTimeout> | null = null;
   
   // Session state
   private sessionStartTime: Date | null = null;
@@ -138,7 +138,7 @@ export class ClockService {
     }
   }
 
-  setTimeSlotDuration(minutes: 0 | 15 | 30 | 50) {
+  setTimeSlotDuration(minutes: 0 | 15 | 30 | 50 | 60) {
     console.log('ClockService: Setting time slot duration to', minutes, 'minutes');
     this.timeSlotDuration = minutes;
     this.notifySubscribers();

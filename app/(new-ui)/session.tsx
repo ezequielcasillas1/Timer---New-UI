@@ -312,15 +312,9 @@ export default function NewSessionScreen() {
 
   const handleStartSession = async () => {
     if (isRunning) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H1',location:'session.tsx:stop-branch',message:'Stop branch entered',data:{currentlyPlaying:soundService.getCurrentlyPlaying(),master:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setIsRunning(false);
       clockService.stop();
       await soundService.forceStopAll();
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'stop-debug',hypothesisId:'H2',location:'session.tsx:after-forceStopAll',message:'After forceStopAll in stop branch',data:{currentlyPlaying:soundService.getCurrentlyPlaying()},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       
       const clockData = clockService.getCurrentData();
       const durationSeconds = Math.floor(clockData.sessionElapsedTime);
@@ -376,9 +370,6 @@ export default function NewSessionScreen() {
         breathing: { enabled: state.sounds.breathing.enabled, sound: state.sounds.breathing.selectedSound },
         nature: { enabled: state.sounds.nature.enabled, sound: state.sounds.nature.selectedSound }
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1',location:'session.tsx:breathing-state',message:'Session start sound state',data:{master:state.sounds.master,ticking:{enabled:state.sounds.ticking.enabled,sound:state.sounds.ticking.selectedSound},breathing:{enabled:state.sounds.breathing.enabled,sound:state.sounds.breathing.selectedSound},nature:{enabled:state.sounds.nature.enabled,sound:state.sounds.nature.selectedSound}},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       
       if (state.sounds.master) {
         // Initialize sound service if not already initialized
@@ -390,9 +381,6 @@ export default function NewSessionScreen() {
         }
         if (state.sounds.breathing.enabled) {
           console.log('🎵 [Session] Playing breathing sound:', state.sounds.breathing.selectedSound);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2',location:'session.tsx:before-breathing-play',message:'Calling playSound for breathing',data:{soundId:state.sounds.breathing.selectedSound},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           await soundService.playSound(state.sounds.breathing.selectedSound, true, state.sounds.breathing.volume);
         }
         if (state.sounds.nature.enabled) {
@@ -461,9 +449,6 @@ export default function NewSessionScreen() {
   };
 
   const handleVolumeChange = async (category: 'ticking' | 'breathing' | 'nature', volume: number) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:handleVolumeChange',message:'Volume change requested',data:{category,requestedVolume:volume,requestedType:typeof volume,prevVolume:state.sounds[category]?.volume,prevType:typeof (state.sounds as any)?.[category]?.volume,prevIsNaN:Number.isNaN((state.sounds as any)?.[category]?.volume),reqIsNaN:Number.isNaN(volume),reqIsFinite:Number.isFinite(volume)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     dispatch({
       type: 'UPDATE_SOUNDS',
       payload: {
@@ -530,9 +515,6 @@ export default function NewSessionScreen() {
   };
 
   const handlePreviewSound = async (soundId: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'session.tsx:handlePreviewSound',message:'Preview clicked',data:{soundId,previewingSoundId,isRunning,isCurrentlyPlaying:previewingSoundId===soundId,masterEnabled:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (isRunning) return; // keep session audio clean
     if (previewingSoundId === soundId) {
       await soundService.forceStopAll();
@@ -542,17 +524,8 @@ export default function NewSessionScreen() {
     setPreviewingSoundId(soundId);
     await soundService.forceStopAll();
     // Ensure sound service is initialized before preview
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'Initializing service for preview',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     await soundService.initialize();
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'Before playSound call',data:{soundId,willLoop:true},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     await soundService.playSound(soundId, true);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'session.tsx:handlePreviewSound',message:'After playSound call',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
   };
 
   return (
@@ -787,10 +760,6 @@ export default function NewSessionScreen() {
                             {isSelected && (
                               <View style={styles.volumeSliderContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                  {/* #region agent log */}
-                                  {(!Number.isFinite(state.sounds[category].volume) || Number.isNaN(state.sounds[category].volume)) &&
-                                    (fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H4',location:'session.tsx:render-volume',message:'Invalid volume detected during render',data:{category,volume:state.sounds[category].volume,volumeType:typeof state.sounds[category].volume,computedLabel:Math.round(((state.sounds[category].volume as any) ?? 1.0) * 100),computedWidth:(((state.sounds[category].volume as any) ?? 1.0) / 1.5) * 100},timestamp:Date.now()})}).catch(()=>{}), null)}
-                                  {/* #endregion */}
                                   <Text style={styles.volumeLabel}>Volume: {Math.round((state.sounds[category].volume ?? 1.0) * 100)}%</Text>
                                   {state.sounds[category].volume > 1.3 && (
                                     <Text style={{ color: '#FF6B6B', fontSize: 12, fontWeight: '600' }}>⚠️ High</Text>
@@ -802,9 +771,6 @@ export default function NewSessionScreen() {
                                     onPress={() => {
                                       const baseVol: any = (state.sounds as any)?.[category]?.volume;
                                       const nextVol = Math.max(0, baseVol - 0.1);
-                                      // #region agent log
-                                      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:minus-press',message:'Minus pressed',data:{category,baseVol,baseType:typeof baseVol,nextVol,nextType:typeof nextVol,baseIsNaN:Number.isNaN(baseVol),nextIsNaN:Number.isNaN(nextVol)},timestamp:Date.now()})}).catch(()=>{});
-                                      // #endregion
                                       handleVolumeChange(category, nextVol);
                                     }}
                                   >
@@ -823,9 +789,6 @@ export default function NewSessionScreen() {
                                     onPress={() => {
                                       const baseVol: any = (state.sounds as any)?.[category]?.volume;
                                       const nextVol = Math.min(1.5, baseVol + 0.1);
-                                      // #region agent log
-                                      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H1',location:'session.tsx:plus-press',message:'Plus pressed',data:{category,baseVol,baseType:typeof baseVol,nextVol,nextType:typeof nextVol,baseIsNaN:Number.isNaN(baseVol),nextIsNaN:Number.isNaN(nextVol)},timestamp:Date.now()})}).catch(()=>{});
-                                      // #endregion
                                       handleVolumeChange(category, nextVol);
                                     }}
                                   >
@@ -1138,7 +1101,7 @@ export default function NewSessionScreen() {
                           ]}
                           onPress={() => {
                             handleTimeSlotChange(val as 15 | 30 | 50 | 60);
-                            clockService.setTimeSlotDuration(val);
+                            clockService.setTimeSlotDuration(val as 0 | 15 | 30 | 50 | 60);
                           }}
                         >
                           <Text style={styles.sessionSettingButtonText}>{val}m</Text>
