@@ -149,9 +149,6 @@ export default function SoundsScreen() {
   };
 
   const handlePlayPreview = async (soundId: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H1',location:'sounds.tsx:handlePlayPreview',message:'Preview clicked',data:{soundId,playingId,isCurrentlyPlaying:playingId===soundId,masterEnabled:state.sounds.master},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (playingId === soundId) {
       await soundService.forceStopAll();
       setPlayingId(null);
@@ -159,17 +156,8 @@ export default function SoundsScreen() {
       await soundService.forceStopAll();
       setPlayingId(soundId);
       // Ensure sound service is initialized before preview
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'Initializing service for preview',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       await soundService.initialize();
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'Before playSound call',data:{soundId,willLoop:true},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       await soundService.playSound(soundId, true);
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'preview-debug',hypothesisId:'H4',location:'sounds.tsx:handlePlayPreview',message:'After playSound call',data:{soundId},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     }
   };
 

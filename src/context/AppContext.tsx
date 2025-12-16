@@ -344,13 +344,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case 'UPDATE_SOUNDS':
-      // #region agent log
-      try {
-        const p: any = (action as any).payload;
-        const nextSounds: any = { ...state.sounds, ...p };
-        fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H2',location:'AppContext.tsx:reducer:UPDATE_SOUNDS',message:'UPDATE_SOUNDS merge',data:{payloadKeys:p?Object.keys(p):null,prev:{ticking:state.sounds.ticking?.volume,breathing:state.sounds.breathing?.volume,nature:state.sounds.nature?.volume},next:{ticking:nextSounds.ticking?.volume,breathing:nextSounds.breathing?.volume,nature:nextSounds.nature?.volume},types:{prev:{t:typeof state.sounds.ticking?.volume,b:typeof state.sounds.breathing?.volume,n:typeof state.sounds.nature?.volume},next:{t:typeof nextSounds.ticking?.volume,b:typeof nextSounds.breathing?.volume,n:typeof nextSounds.nature?.volume}},isNaN:{prev:{t:Number.isNaN(state.sounds.ticking?.volume as any),b:Number.isNaN(state.sounds.breathing?.volume as any),n:Number.isNaN(state.sounds.nature?.volume as any)},next:{t:Number.isNaN(nextSounds.ticking?.volume as any),b:Number.isNaN(nextSounds.breathing?.volume as any),n:Number.isNaN(nextSounds.nature?.volume as any)}}},timestamp:Date.now()})}).catch(()=>{});
-      } catch {}
-      // #endregion
       return {
         ...state,
         sounds: { ...state.sounds, ...action.payload },
@@ -639,14 +632,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }));
         }
 
-        // #region agent log
-        try {
-          const s: any = parsedState?.sounds;
-          const presets: any[] = Array.isArray(parsedState?.soundPresets) ? parsedState.soundPresets : [];
-          fetch('http://127.0.0.1:7243/ingest/b3d0efa2-2934-43fa-b4ed-f85b94417f15',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'nan-vol-pre',hypothesisId:'H3',location:'AppContext.tsx:loadState',message:'Loaded persisted state (sound volumes snapshot)',data:{hasSounds:!!s,volumes:{ticking:s?.ticking?.volume,breathing:s?.breathing?.volume,nature:s?.nature?.volume},types:{t:typeof s?.ticking?.volume,b:typeof s?.breathing?.volume,n:typeof s?.nature?.volume},isNaN:{t:Number.isNaN(s?.ticking?.volume as any),b:Number.isNaN(s?.breathing?.volume as any),n:Number.isNaN(s?.nature?.volume as any)},presetCount:presets.length,presetSample:presets.slice(0,3).map((p:any)=>({id:p?.id,tickingVol:p?.ticking?.volume,breathingVol:p?.breathing?.volume,natureVol:p?.nature?.volume,types:{t:typeof p?.ticking?.volume,b:typeof p?.breathing?.volume,n:typeof p?.nature?.volume},isNaN:{t:Number.isNaN(p?.ticking?.volume as any),b:Number.isNaN(p?.breathing?.volume as any),n:Number.isNaN(p?.nature?.volume as any)}}))},timestamp:Date.now()})}).catch(()=>{});
-        } catch {}
-        // #endregion
-        
         // Ensure all required fields exist
         const stateWithDefaults = {
           ...initialState,

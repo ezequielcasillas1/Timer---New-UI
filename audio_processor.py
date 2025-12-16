@@ -22,25 +22,6 @@ import math
 import json
 import time
 
-# Debug logging (Cursor debug mode)
-_DEBUG_LOG_PATH = r"d:\Dev\ADHD-Timer-UI\.cursor\debug.log"
-
-def _dbg(hypothesisId: str, location: str, message: str, data: dict) -> None:
-    try:
-        payload = {
-            "sessionId": "debug-session",
-            "runId": "audio-pop-1",
-            "hypothesisId": hypothesisId,
-            "location": location,
-            "message": message,
-            "data": data,
-            "timestamp": int(time.time() * 1000),
-        }
-        with open(_DEBUG_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
-
 try:
     import numpy as np
     import soundfile as sf
@@ -1127,20 +1108,6 @@ def process_audio_file(
 
         print(f"  Loading: {input_path.name}")
         audio_data, sample_rate = load_audio_file(input_path)
-        if input_path.name == "classic-clock-tick.wav":
-            # #region agent log
-            _dbg("H1", "audio_processor.py:process_audio_file", "Loaded input", {
-                "file": input_path.name,
-                "sample_rate": int(sample_rate),
-                "shape": list(getattr(audio_data, "shape", [])),
-                "dtype": str(getattr(audio_data, "dtype", "")),
-                "nan": bool(np.isnan(audio_data).any()) if hasattr(audio_data, "__array__") else None,
-                "inf": bool(np.isinf(audio_data).any()) if hasattr(audio_data, "__array__") else None,
-                "min": float(np.min(audio_data)) if hasattr(audio_data, "__array__") else None,
-                "max": float(np.max(audio_data)) if hasattr(audio_data, "__array__") else None,
-                "std": float(np.std(audio_data)) if hasattr(audio_data, "__array__") else None,
-            })
-            # #endregion
         original_shape = audio_data.shape
         print(f"    Sample rate: {sample_rate} Hz, Shape: {original_shape}, Duration: {len(audio_data)/sample_rate:.2f}s")
 
@@ -1152,20 +1119,6 @@ def process_audio_file(
             min_silence_ms=min_silence_ms
         )
         print(f"    Trimmed duration: {len(audio_data)/sample_rate:.2f}s")
-        if input_path.name == "classic-clock-tick.wav":
-            # #region agent log
-            _dbg("H1", "audio_processor.py:process_audio_file", "After trim_silence", {
-                "file": input_path.name,
-                "shape": list(getattr(audio_data, "shape", [])),
-                "dtype": str(getattr(audio_data, "dtype", "")),
-                "nan": bool(np.isnan(audio_data).any()),
-                "inf": bool(np.isinf(audio_data).any()),
-                "min": float(np.min(audio_data)),
-                "max": float(np.max(audio_data)),
-                "std": float(np.std(audio_data)),
-            })
-            # #endregion
-
         if enable_noise_reduction:
             print(f"    Noise reduction (threshold {noise_gate_threshold_db} dBFS, reduction {noise_reduction_db} dB)...")
             audio_data = apply_noise_reduction(
@@ -1177,20 +1130,6 @@ def process_audio_file(
                 attack_ms=noise_gate_attack_ms,
                 release_ms=noise_gate_release_ms
             )
-            if input_path.name == "classic-clock-tick.wav":
-                # #region agent log
-                _dbg("H2", "audio_processor.py:process_audio_file", "After apply_noise_reduction", {
-                    "file": input_path.name,
-                    "shape": list(getattr(audio_data, "shape", [])),
-                    "dtype": str(getattr(audio_data, "dtype", "")),
-                    "nan": bool(np.isnan(audio_data).any()),
-                    "inf": bool(np.isinf(audio_data).any()),
-                    "min": float(np.min(audio_data)),
-                    "max": float(np.max(audio_data)),
-                    "std": float(np.std(audio_data)),
-                })
-                # #endregion
-
         if xfade_duration_ms is not None and xfade_duration_ms > 0:
             print(f"    Applying {xfade_duration_ms}ms Equal-Power Cosine Crossfade...")
             audio_data = apply_crossfade(
@@ -1201,20 +1140,6 @@ def process_audio_file(
                 enforce_seamless_loop=enforce_seamless_loop,
                 mirror_loop_start=mirror_loop_start
             )
-            if input_path.name == "classic-clock-tick.wav":
-                # #region agent log
-                _dbg("H3", "audio_processor.py:process_audio_file", "After apply_crossfade", {
-                    "file": input_path.name,
-                    "shape": list(getattr(audio_data, "shape", [])),
-                    "dtype": str(getattr(audio_data, "dtype", "")),
-                    "nan": bool(np.isnan(audio_data).any()),
-                    "inf": bool(np.isinf(audio_data).any()),
-                    "min": float(np.min(audio_data)),
-                    "max": float(np.max(audio_data)),
-                    "std": float(np.std(audio_data)),
-                })
-                # #endregion
-
         if use_peak_normalization:
             target_peak_db = target_lufs
             print(f"    Normalizing to {target_peak_db} dBFS peak (preserves transients)...")
@@ -1224,19 +1149,6 @@ def process_audio_file(
                 target_dbfs=target_peak_db,
                 max_peak_dbfs=max_peak_dbfs
             )
-            if input_path.name == "classic-clock-tick.wav":
-                # #region agent log
-                _dbg("H4", "audio_processor.py:process_audio_file", "After normalize_peak", {
-                    "file": input_path.name,
-                    "shape": list(getattr(audio_data, "shape", [])),
-                    "dtype": str(getattr(audio_data, "dtype", "")),
-                    "nan": bool(np.isnan(audio_data).any()),
-                    "inf": bool(np.isinf(audio_data).any()),
-                    "min": float(np.min(audio_data)),
-                    "max": float(np.max(audio_data)),
-                    "std": float(np.std(audio_data)),
-                })
-                # #endregion
         else:
             print(f"    Normalizing to {target_lufs} LUFS (ITU-R BS.1770)...")
             audio_data = normalize_lufs(
@@ -1254,20 +1166,6 @@ def process_audio_file(
                 sample_rate,
                 target_duration_sec=target_duration_sec
             )
-            if input_path.name == "classic-clock-tick.wav":
-                # #region agent log
-                _dbg("H5", "audio_processor.py:process_audio_file", "After stabilize_loop", {
-                    "file": input_path.name,
-                    "shape": list(getattr(audio_data, "shape", [])),
-                    "dtype": str(getattr(audio_data, "dtype", "")),
-                    "nan": bool(np.isnan(audio_data).any()),
-                    "inf": bool(np.isinf(audio_data).any()),
-                    "min": float(np.min(audio_data)),
-                    "max": float(np.max(audio_data)),
-                    "std": float(np.std(audio_data)),
-                })
-                # #endregion
-
         stem = output_path.stem
         output_wav_path = output_path.parent / f"{stem}_processed.wav"
         save_audio_file(audio_data, sample_rate, output_wav_path)
